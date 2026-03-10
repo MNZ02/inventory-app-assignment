@@ -27,7 +27,7 @@ export const transactionsService = {
     }))
   },
 
-  async create(productId: string, quantityChange: number, type: 'IN' | 'OUT', userId: string) {
+  async create(productId: string, quantityChange: number, type: 'IN' | 'OUT', userId: string): Promise<Transaction> {
     return await db.transaction(async (tx) => {
       const [product] = await tx
         .select()
@@ -38,6 +38,16 @@ export const transactionsService = {
 
       if (!product) {
         throw new Error('PRODUCT_NOT_FOUND')
+      }
+
+      const [user] = await tx
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1)
+
+      if (!user) {
+        throw new Error('USER_NOT_FOUND')
       }
 
       if (type === 'OUT' && product.quantityInStock < quantityChange) {
@@ -56,7 +66,15 @@ export const transactionsService = {
         .values({ productId, quantityChange, type, performedBy: userId })
         .returning()
 
-      return inserted
+      return {
+        id: inserted.id,
+        productId: inserted.productId,
+        productName: product.name,
+        quantityChange: inserted.quantityChange,
+        type: inserted.type,
+        date: inserted.createdAt.toISOString(),
+        performedBy: user.name,
+      }
     })
   },
 }

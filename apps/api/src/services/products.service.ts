@@ -17,20 +17,23 @@ const toProduct = (row: DbProduct): Product => ({
   createdAt: row.createdAt.toISOString(),
 })
 
+const escapeLike = (str: string) => str.replace(/[\\%_]/g, (match) => `\\${match}`)
+
 export const productsService = {
   async findAll({ search, category, sortBy, order }: GetProductsParams): Promise<Product[]> {
     const conditions = []
     if (search) {
+      const escaped = escapeLike(search)
       conditions.push(
         or(
-          ilike(products.name, `%${search}%`),
-          ilike(products.sku, `%${search}%`),
-          ilike(products.supplierName, `%${search}%`),
+          ilike(products.name, `%${escaped}%`),
+          ilike(products.sku, `%${escaped}%`),
+          ilike(products.supplierName, `%${escaped}%`),
         ),
       )
     }
     if (category) {
-      conditions.push(ilike(products.category, category))
+      conditions.push(ilike(products.category, escapeLike(category)))
     }
 
     const orderDir = order === 'asc' ? asc : desc

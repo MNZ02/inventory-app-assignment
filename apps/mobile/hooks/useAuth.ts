@@ -38,8 +38,12 @@ export function useAuthProvider(): AuthState {
     getToken().then((token) => {
       if (token) {
         const payload = decodeJWTPayload(token)
-        if (payload && payload.sub) {
+        const isExpired = payload?.exp ? payload.exp * 1000 < Date.now() : false
+
+        if (payload && payload.sub && !isExpired) {
           setUser({ id: payload.sub, email: payload.email, name: payload.name ?? '', role: payload.role })
+        } else if (isExpired) {
+          removeToken()
         }
       }
       setIsLoading(false)
