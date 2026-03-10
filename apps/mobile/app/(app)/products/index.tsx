@@ -35,7 +35,7 @@ export default function ProductsScreen() {
     order: sort.order,
   })
 
-  const searchTimer = useRef<NodeJS.Timeout | null>(null)
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     return () => {
@@ -77,7 +77,8 @@ export default function ProductsScreen() {
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
         ListEmptyComponent={<Text style={styles.empty}>No products found</Text>}
-        renderItem={({ item }: { item: Product }) => (
+        renderItem={({ item, index }: { item: Product; index: number }) => (
+          <View>
           <TouchableOpacity onPress={() => router.push(`/(app)/products/${item.id}`)}>
             <Card style={styles.card}>
               <View style={styles.cardRow}>
@@ -95,6 +96,7 @@ export default function ProductsScreen() {
               </View>
             </Card>
           </TouchableOpacity>
+          </View>
         )}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
       />

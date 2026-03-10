@@ -1,9 +1,13 @@
-import { useEffect, useState } from 'react'
-import { FlatList, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useEffect, useState, useCallback } from 'react'
+import { FlatList, ScrollView, StyleSheet, Text, View, RefreshControl, TouchableOpacity } from 'react-native'
+import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { api } from '../../lib/api'
 import { Card } from '../../components/ui/Card'
 import { Badge } from '../../components/ui/Badge'
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner'
+import { Button } from '../../components/ui/Button'
+import { useAuth } from '../../hooks/useAuth'
 import type { Product, Transaction } from '@inventory/types'
 
 interface DashboardData {
@@ -14,39 +18,136 @@ interface DashboardData {
 }
 
 export default function DashboardScreen() {
+  const router = useRouter()
+  const { user } = useAuth()
   const [data, setData] = useState<DashboardData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const fetchData = useCallback(async () => {
+    try {
+      const res = await api.get<DashboardData>('/dashboard')
+      setData(res.data ?? null)
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
+    }
+  }, [])
 
   useEffect(() => {
-    api.get<DashboardData>('/dashboard').then((res) => {
-      setData(res.data ?? null)
-    }).finally(() => setIsLoading(false))
-  }, [])
+    fetchData()
+  }, [fetchData])
+
+  const onRefresh = useCallback(() => {
+    setIsRefreshing(true)
+    fetchData()
+  }, [fetchData])
+
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Good morning'
+    if (hour < 18) return 'Good afternoon'
+    return 'Good evening'
+  }
+
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
 
   if (isLoading) return <LoadingSpinner />
 
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.heading}>Dashboard</Text>
+  const lowStockCount = data?.lowStockItems.length ?? 0
+  const hasLowStock = lowStockCount > 0
 
-      <View style={styles.statsRow}>
-        <Card style={styles.statCard}>
-          <Text style={styles.statValue}>{data?.totalProducts ?? 0}</Text>
-          <Text style={styles.statLabel}>Products</Text>
-        </Card>
-        <Card style={styles.statCard}>
-          <Text style={styles.statValue}>{data?.totalStockQuantity ?? 0}</Text>
-          <Text style={styles.statLabel}>Total Stock</Text>
-        </Card>
-        <Card style={[styles.statCard, (data?.lowStockItems.length ?? 0) > 0 ? styles.statCardWarn : null]}>
-          <Text style={[styles.statValue, (data?.lowStockItems.length ?? 0) > 0 ? styles.statValueWarn : null]}>
-            {data?.lowStockItems.length ?? 0}
-          </Text>
-          <Text style={styles.statLabel}>Low Stock</Text>
-        </Card>
+  return (
+    <ScrollView 
+      style={styles.container} 
+      contentContainerStyle={styles.content}
+      refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
+    >
+      <View style={styles.header}>
+        <Text style={styles.greeting}>{getGreeting()}, {user?.name}</Text>
+        <Text style={styles.date}>{currentDate}</Text>
       </View>
 
-      <Text style={styles.sectionTitle}>Recent Transactions</Text>
+      <View style={styles.statsRow}>
+        <View style={{ flex: 1 }}>
+          <Card style={styles.statCard}>
+            <View style={[styles.iconContainer, { backgroundColor: '#dbeafe' }]}>
+              <Ionicons name="cube-outline" size={24} color="#2563eb" />
+            </View>
+            <Text style={styles.statValue}>{data?.totalProducts ?? 0}</Text>
+            <Text style={styles.statLabel}>Products</Text>
+          </Card>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Card style={styles.statCard}>
+            <View style={[styles.iconContainer, { backgroundColor: '#dcfce7' }]}>
+              <Ionicons name="layers-outline" size={24} color="#16a34a" />
+            </View>
+            <Text style={styles.statValue}>{data?.totalStockQuantity ?? 0}</Text>
+            <Text style={styles.statLabel}>Total Stock</Text>
+          </Card>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Card style={[styles.statCard, hasLowStock ? styles.statCardWarn : null]}>
+            <View style={[styles.iconContainer, { backgroundColor: hasLowStock ? '#ffedd5' : '#fff7ed' }]}>
+              <Ionicons name="warning-outline" size={24} color="#ea580c" />
+            </View>
+            <Text style={[styles.statValue, hasLowStock ? styles.statValueWarn : null]}>
+              {lowStockCount}
+            </Text>
+            <Text style={styles.statLabel}>Low Stock</Text>
+          </Card>
+        </View>
+      </View>
+
+      {hasLowStock && (
+        <View>
+        <View style={styles.alertSection}>
+          <View style={styles.alertHeader}>
+            <Text style={styles.alertTitle}>⚠ Low Stock Alert — {lowStockCount} item{lowStockCount !== 1 ? 's' : ''} need attention</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.alertScroll}>
+            {data?.lowStockItems.map(item => (
+              <TouchableOpacity key={item.id} onPress={() => router.push(`/(app)/products/${item.id}`)}>
+                <Card style={styles.alertCard}>
+                  <Text style={styles.alertItemName} numberOfLines={1}>{item.name}</Text>
+                  <Text style={styles.alertItemStock}>{item.quantityInStock} in stock</Text>
+                </Card>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+        </View>
+      )}
+
+      <View style={styles.actionRow}>
+        <Button 
+          title="+ Add Product" 
+          variant="primary" 
+          style={styles.actionButton} 
+          onPress={() => router.push('/(app)/products/add')} 
+        />
+        <Button 
+          title="Transactions →" 
+          variant="secondary" 
+          style={styles.actionButton} 
+          onPress={() => router.push('/(app)/transactions')} 
+        />
+      </View>
+
+      <View>
+      <View style={styles.sectionHeaderRow}>
+        <Text style={styles.sectionTitle}>Recent Transactions</Text>
+        <TouchableOpacity onPress={() => router.push('/(app)/transactions')}>
+          <Text style={styles.viewAllText}>View all</Text>
+        </TouchableOpacity>
+      </View>
+
       {data?.recentTransactions.length === 0 ? (
         <Text style={styles.empty}>No transactions yet</Text>
       ) : (
@@ -59,11 +160,13 @@ export default function DashboardScreen() {
               <View style={styles.txRow}>
                 <View style={styles.txInfo}>
                   <Text style={styles.txProduct}>{item.productName}</Text>
-                  <Text style={styles.txMeta}>{new Date(item.date).toLocaleDateString()} · {item.performedBy}</Text>
+                  <Text style={styles.txMeta}>{new Date(item.date).toLocaleString()} · {item.performedBy}</Text>
                 </View>
                 <View style={styles.txRight}>
                   <Badge label={item.type} variant={item.type === 'IN' ? 'success' : 'danger'} />
-                  <Text style={styles.txQty}>{item.type === 'IN' ? '+' : '-'}{item.quantityChange}</Text>
+                  <Text style={[styles.txQty, { color: item.type === 'IN' ? '#16a34a' : '#dc2626' }]}>
+                    {item.type === 'IN' ? '+' : '-'}{item.quantityChange}
+                  </Text>
                 </View>
               </View>
             </Card>
@@ -71,6 +174,7 @@ export default function DashboardScreen() {
           ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
         />
       )}
+      </View>
     </ScrollView>
   )
 }
@@ -78,14 +182,28 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
   content: { padding: 16 },
-  heading: { fontSize: 24, fontWeight: '700', color: '#111827', marginBottom: 16 },
+  header: { marginBottom: 24 },
+  greeting: { fontSize: 24, fontWeight: '700', color: '#111827' },
+  date: { fontSize: 14, color: '#6b7280', marginTop: 4 },
   statsRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
-  statCard: { flex: 1, alignItems: 'center' },
+  statCard: { flex: 1, alignItems: 'center', padding: 12 },
   statCardWarn: { backgroundColor: '#fff7ed', borderWidth: 1, borderColor: '#fed7aa' },
-  statValue: { fontSize: 28, fontWeight: '700', color: '#111827' },
+  iconContainer: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  statValue: { fontSize: 24, fontWeight: '700', color: '#111827' },
   statValueWarn: { color: '#c2410c' },
   statLabel: { fontSize: 12, color: '#6b7280', marginTop: 4 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#111827', marginBottom: 12 },
+  alertSection: { marginBottom: 24, backgroundColor: '#fff7ed', borderRadius: 8, borderWidth: 1, borderColor: '#fed7aa', overflow: 'hidden' },
+  alertHeader: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ffedd5', padding: 12, borderBottomWidth: 1, borderBottomColor: '#fed7aa' },
+  alertTitle: { fontSize: 14, fontWeight: '600', color: '#ea580c' },
+  alertScroll: { padding: 12, gap: 12 },
+  alertCard: { padding: 12, width: 140, marginRight: 12, backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
+  alertItemName: { fontSize: 14, fontWeight: '600', color: '#111827', marginBottom: 4 },
+  alertItemStock: { fontSize: 12, fontWeight: '600', color: '#dc2626' },
+  actionRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  actionButton: { flex: 1 },
+  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#111827' },
+  viewAllText: { fontSize: 14, color: '#2563eb', fontWeight: '500' },
   empty: { color: '#6b7280', textAlign: 'center', padding: 32 },
   txItem: { padding: 12 },
   txRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -93,5 +211,5 @@ const styles = StyleSheet.create({
   txProduct: { fontSize: 15, fontWeight: '600', color: '#111827' },
   txMeta: { fontSize: 12, color: '#6b7280', marginTop: 2 },
   txRight: { alignItems: 'flex-end', gap: 4 },
-  txQty: { fontSize: 16, fontWeight: '700', color: '#374151' },
+  txQty: { fontSize: 16, fontWeight: '700' },
 })

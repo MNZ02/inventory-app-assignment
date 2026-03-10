@@ -40,7 +40,8 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Create Account</Text>
+        <View>
+          <Text style={styles.title}>Create Account</Text>
         <Text style={styles.subtitle}>Get started with Inventory</Text>
 
         {serverError ? <View style={styles.errorBox}><Text style={styles.errorText}>{serverError}</Text></View> : null}
@@ -82,6 +83,7 @@ export default function RegisterScreen() {
         <View style={styles.footer}>
           <Text style={styles.footerText}>Already have an account? </Text>
           <Link href="/(auth)/login"><Text style={styles.link}>Sign In</Text></Link>
+        </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

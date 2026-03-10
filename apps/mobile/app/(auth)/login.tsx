@@ -33,7 +33,8 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Sign In</Text>
+        <View>
+          <Text style={styles.title}>Sign In</Text>
         <Text style={styles.subtitle}>Welcome back to Inventory</Text>
 
         {serverError ? <View style={styles.errorBox}><Text style={styles.errorText}>{serverError}</Text></View> : null}
@@ -76,6 +77,7 @@ export default function LoginScreen() {
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account? </Text>
           <Link href="/(auth)/register"><Text style={styles.link}>Register</Text></Link>
+        </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
