@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "outDir": "dist",
+    "rootDir": ".",
+    "types": ["bun"]
+  },
+  "include": ["src", "drizzle.config.ts"]
+}

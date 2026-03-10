@@ -1,0 +1,9 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@inventory/types": ["../../packages/types/src/index.ts"]
+    }
+  }
+}

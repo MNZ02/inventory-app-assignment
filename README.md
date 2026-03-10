@@ -1,159 +1,156 @@
-# Turborepo starter
+# Inventory Management System
 
-This Turborepo starter is maintained by the Turborepo core team.
+A full-stack inventory management system built as a Turborepo monorepo with a Hono/Bun API backend and Expo React Native mobile app.
 
-## Using this example
+---
 
-Run the following command:
+## Project Overview
 
-```sh
-npx create-turbo@latest
+Track products, manage stock levels, and record stock transactions (IN/OUT) with role-based access (admin/staff). The mobile app communicates with a REST API, authenticated via JWT.
+
+---
+
+## Prerequisites
+
+| Tool | Version |
+|---|---|
+| Node.js | ≥ 18 |
+| Bun | ≥ 1.0 |
+| pnpm | ≥ 9.0 |
+| PostgreSQL | ≥ 14 |
+| Expo CLI | latest (`npm i -g expo-cli`) |
+
+---
+
+## Setup
+
+### 1. Clone and install dependencies
+
+```bash
+git clone <repo-url>
+cd inventory-app
+pnpm install
 ```
 
-## What's inside?
+### 2. Configure environment variables
 
-This Turborepo includes the following packages/apps:
+```bash
+# API
+cp apps/api/.env.example apps/api/.env
+# Edit apps/api/.env with your PostgreSQL credentials and a strong JWT_SECRET
 
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+# Mobile
+cp apps/mobile/.env.example apps/mobile/.env
+# Edit EXPO_PUBLIC_API_URL if your API runs on a different host/port
 ```
 
-Without global `turbo`, use your package manager:
+### 3. Run database migrations
 
-```sh
-cd my-turborepo
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+```bash
+cd apps/api
+bun run db:generate   # generate SQL migration files from schema
+bun run db:migrate    # apply migrations to the database
+cd ../..
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+### 4. Start development servers
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+```bash
+# From repo root — starts API + all apps simultaneously
+pnpm dev
 
-```sh
-turbo build --filter=docs
+# Or run individually:
+cd apps/api && bun run dev
+cd apps/mobile && npx expo start
 ```
 
-Without global `turbo`:
+The API runs at `http://localhost:3000`. Open the Expo app with Expo Go or a dev build.
 
-```sh
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+---
+
+## API Documentation
+
+All protected endpoints require `Authorization: Bearer <token>` header.
+
+All responses follow the shape: `{ data, message?, error? }`
+
+### Auth
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/auth/register` | No | Register a new user, returns JWT |
+| POST | `/auth/login` | No | Login with email/password, returns JWT |
+
+### Products
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/products` | Yes | List all products. Query: `search`, `category`, `sortBy` (price\|quantity), `order` (asc\|desc) |
+| GET | `/products/:id` | Yes | Get single product by ID |
+| POST | `/products` | Yes | Create a new product |
+| PUT | `/products/:id` | Yes | Update a product |
+| DELETE | `/products/:id` | Yes | Delete a product |
+
+### Transactions
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/transactions` | Yes | List all transactions. Query: `productId` to filter |
+| POST | `/transactions` | Yes | Record a stock IN or OUT transaction (atomic — updates stock, rejects OUT if insufficient) |
+
+### Dashboard
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/dashboard` | Yes | Returns `{ totalProducts, totalStockQuantity, lowStockItems, recentTransactions }` |
+
+### Health
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/health` | No | Health check |
+
+---
+
+## Folder Structure
+
+```
+inventory-app/
+├── turbo.json                   # Turborepo pipeline config
+├── package.json                 # Root workspace (pnpm)
+├── pnpm-workspace.yaml
+│
+├── apps/
+│   ├── api/                     # Hono + Bun REST API
+│   │   ├── src/
+│   │   │   ├── index.ts         # Entry point (Bun.serve)
+│   │   │   ├── routes/          # auth, products, transactions, dashboard
+│   │   │   ├── middleware/      # JWT auth middleware (jose)
+│   │   │   └── db/              # Drizzle schema, client, migrations
+│   │   ├── drizzle.config.ts
+│   │   └── .env.example
+│   │
+│   └── mobile/                  # Expo React Native app (Expo Router v3)
+│       ├── app/
+│       │   ├── _layout.tsx      # Root layout + auth guard
+│       │   ├── (auth)/          # Login, Register screens
+│       │   └── (app)/           # Dashboard, Products, Transactions screens
+│       ├── components/ui/       # Button, Input, Card, Badge, LoadingSpinner
+│       ├── hooks/               # useAuth, useProducts
+│       ├── lib/                 # axios API client, expo-secure-store helpers
+│       └── .env.example
+│
+└── packages/
+    └── types/                   # Shared TypeScript interfaces (no build step)
+        └── src/                 # auth.ts, product.ts, transaction.ts
 ```
 
-### Develop
+---
 
-To develop all apps and packages, run the following command:
+## Key Design Decisions
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+- **JWT** signed with HS256 via `jose`, expires in 7 days. Payload: `{ sub, email, role }`
+- **Stock transactions** run in a DB transaction — an OUT that would bring stock below 0 is rejected with HTTP 400
+- **Low stock** threshold is `quantityInStock < 10`
+- **Mobile** uses `expo-secure-store` for JWT persistence; requires Expo Dev Client for full native support
+- **Shared types** in `packages/types` are consumed as raw TypeScript source via path aliases — no build step needed
