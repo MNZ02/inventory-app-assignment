@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import {
   FlatList,
   StyleSheet,
@@ -35,10 +35,21 @@ export default function ProductsScreen() {
     order: sort.order,
   })
 
+  const searchTimer = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current)
+    }
+  }, [])
+
   const handleSearch = useCallback((text: string) => {
     setSearch(text)
-    const t = setTimeout(() => setDebouncedSearch(text), 400)
-    return () => clearTimeout(t)
+    if (searchTimer.current) clearTimeout(searchTimer.current)
+    searchTimer.current = setTimeout(() => {
+      setDebouncedSearch(text)
+      searchTimer.current = null
+    }, 400)
   }, [])
 
   const cycleSortIndex = () => setSortIndex((i) => (i + 1) % SORT_OPTIONS.length)

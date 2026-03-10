@@ -61,7 +61,8 @@ pnpm dev
 
 # Or run individually:
 cd apps/api && bun run dev
-cd apps/mobile && npx expo start
+cd apps/mobile && pnpm dev
+# Optional: pnpm dev:lan | pnpm dev:localhost | pnpm dev:tunnel
 ```
 
 The API runs at `http://localhost:3000`. Open the Expo app with Expo Go or a dev build.

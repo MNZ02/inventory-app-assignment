@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 import { Stack, useRouter, useSegments } from 'expo-router'
-import { AuthContext, useAuthProvider } from '../hooks/useAuth'
+import { AuthContext, useAuthProvider, useAuth } from '../hooks/useAuth'
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuthProvider()
+  const { isAuthenticated, isLoading } = useAuth()
   const router = useRouter()
   const segments = useSegments()
 
