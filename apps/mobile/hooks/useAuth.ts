@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { api } from '../lib/api'
-import { apiClient } from '../lib/api'
+import { api, apiClient } from '../lib/api'
 import { saveToken, getToken, removeToken } from '../lib/storage'
 import type { User } from '@inventory/types'
 
@@ -56,7 +55,10 @@ export function useAuthProvider(): AuthState {
       (response) => response,
       async (error) => {
         const status = error?.response?.status
-        if (status === 401) {
+        const requestUrl = String(error?.config?.url ?? '')
+        const isCredentialEndpoint = /\/auth\/(login|register)(\/|$)/.test(requestUrl)
+
+        if (status === 401 && !isCredentialEndpoint) {
           await removeToken()
           setUser(null)
         }
