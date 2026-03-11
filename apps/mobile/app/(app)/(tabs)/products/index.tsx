@@ -8,10 +8,11 @@ import {
   View,
   RefreshControl,
 } from 'react-native'
+import Animated, { FadeInDown } from 'react-native-reanimated'
 import { useRouter } from 'expo-router'
-import { useProducts } from '../../../hooks/useProducts'
-import { Card } from '../../../components/ui/Card'
-import { LoadingSpinner } from '../../../components/ui/LoadingSpinner'
+import { useProducts } from '../../../../hooks/useProducts'
+import { Card } from '../../../../components/ui/Card'
+import { LoadingSpinner } from '../../../../components/ui/LoadingSpinner'
 import type { Product } from '@inventory/types'
 
 const SORT_OPTIONS = [
@@ -35,7 +36,7 @@ export default function ProductsScreen() {
     order: sort.order,
   })
 
-  const searchTimer = useRef<NodeJS.Timeout | null>(null)
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     return () => {
@@ -77,7 +78,8 @@ export default function ProductsScreen() {
         contentContainerStyle={styles.list}
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
         ListEmptyComponent={<Text style={styles.empty}>No products found</Text>}
-        renderItem={({ item }: { item: Product }) => (
+        renderItem={({ item, index }: { item: Product; index: number }) => (
+          <Animated.View entering={FadeInDown.delay(index * 60).duration(350)}>
           <TouchableOpacity onPress={() => router.push(`/(app)/products/${item.id}`)}>
             <Card style={styles.card}>
               <View style={styles.cardRow}>
@@ -95,6 +97,7 @@ export default function ProductsScreen() {
               </View>
             </Card>
           </TouchableOpacity>
+          </Animated.View>
         )}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
       />
@@ -108,22 +111,22 @@ export default function ProductsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
-  toolbar: { flexDirection: 'row', padding: 12, gap: 8, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
-  searchInput: { flex: 1, borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 15, color: '#111827', backgroundColor: '#f9fafb' },
-  sortBtn: { backgroundColor: '#eff6ff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, justifyContent: 'center' },
-  sortBtnText: { color: '#2563eb', fontWeight: '600', fontSize: 13 },
-  list: { padding: 12 },
-  empty: { textAlign: 'center', color: '#6b7280', padding: 32 },
-  card: {},
+  toolbar: { flexDirection: 'row', padding: 14, gap: 10, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+  searchInput: { flex: 1, borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10, fontSize: 15, fontFamily: 'Inter_400Regular', color: '#111827', backgroundColor: '#f8fafc' },
+  sortBtn: { backgroundColor: '#eff6ff', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, justifyContent: 'center', borderWidth: 1, borderColor: '#dbeafe' },
+  sortBtnText: { color: '#2563eb', fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+  list: { padding: 16, paddingBottom: 100 },
+  empty: { textAlign: 'center', color: '#6b7280', padding: 40, fontFamily: 'Inter_400Regular', fontSize: 16 },
+  card: { padding: 14, borderRadius: 16 },
   cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardInfo: { flex: 1 },
-  cardName: { fontSize: 16, fontWeight: '600', color: '#111827' },
-  cardSku: { fontSize: 12, color: '#6b7280', marginTop: 2 },
-  cardCategory: { fontSize: 12, color: '#2563eb', marginTop: 2 },
+  cardName: { fontSize: 17, fontFamily: 'Inter_600SemiBold', color: '#111827', letterSpacing: -0.3 },
+  cardSku: { fontSize: 13, fontFamily: 'Inter_500Medium', color: '#64748b', marginTop: 3 },
+  cardCategory: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#3b82f6', marginTop: 3 },
   cardRight: { alignItems: 'flex-end' },
-  cardPrice: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  cardStock: { fontSize: 12, color: '#16a34a', marginTop: 2 },
-  lowStock: { color: '#dc2626' },
-  fab: { position: 'absolute', bottom: 24, right: 24, width: 56, height: 56, borderRadius: 28, backgroundColor: '#2563eb', alignItems: 'center', justifyContent: 'center', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 },
-  fabText: { color: '#fff', fontSize: 28, fontWeight: '300', lineHeight: 32 },
+  cardPrice: { fontSize: 17, fontFamily: 'Inter_700Bold', color: '#0f172a' },
+  cardStock: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#10b981', marginTop: 3 },
+  lowStock: { color: '#ef4444' },
+  fab: { position: 'absolute', bottom: 24, right: 24, width: 60, height: 60, borderRadius: 30, backgroundColor: '#2563eb', alignItems: 'center', justifyContent: 'center', elevation: 6, shadowColor: '#2563eb', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
+  fabText: { color: '#fff', fontSize: 32, fontFamily: 'Inter_400Regular', lineHeight: 36 },
 })

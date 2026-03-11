@@ -1,33 +1,34 @@
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, type TouchableOpacityProps } from 'react-native'
+import { ActivityIndicator, Text, TouchableOpacity, type TouchableOpacityProps } from 'react-native'
 
 interface ButtonProps extends TouchableOpacityProps {
   title: string
   loading?: boolean
   variant?: 'primary' | 'secondary' | 'danger'
+  className?: string
 }
 
-export function Button({ title, loading, variant = 'primary', style, disabled, ...props }: ButtonProps) {
+export function Button({ title, loading, variant = 'primary', className, disabled, ...props }: ButtonProps) {
+  const baseClasses = "rounded-xl px-4 py-3.5 items-center justify-center";
+  const variantClasses = {
+    primary: "bg-blue-600 active:bg-blue-700",
+    secondary: "bg-white border border-blue-600",
+    danger: "bg-red-500 active:bg-red-600"
+  };
+  const disabledClasses = (disabled || loading) ? "opacity-50" : "";
+
   return (
     <TouchableOpacity
-      style={[styles.base, styles[variant], disabled || loading ? styles.disabled : null, style]}
+      className={`${baseClasses} ${variantClasses[variant]} ${disabledClasses} ${className || ''}`}
       disabled={disabled || loading}
       {...props}
     >
       {loading ? (
         <ActivityIndicator color={variant === 'secondary' ? '#2563eb' : '#fff'} />
       ) : (
-        <Text style={[styles.text, variant === 'secondary' ? styles.textSecondary : null]}>{title}</Text>
+        <Text className={`font-semibold text-base ${variant === 'secondary' ? 'text-blue-600' : 'text-white'}`}>
+          {title}
+        </Text>
       )}
     </TouchableOpacity>
   )
 }
-
-const styles = StyleSheet.create({
-  base: { borderRadius: 8, paddingVertical: 12, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' },
-  primary: { backgroundColor: '#2563eb' },
-  secondary: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#2563eb' },
-  danger: { backgroundColor: '#dc2626' },
-  disabled: { opacity: 0.5 },
-  text: { color: '#fff', fontWeight: '600', fontSize: 16 },
-  textSecondary: { color: '#2563eb' },
-})

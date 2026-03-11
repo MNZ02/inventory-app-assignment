@@ -62,4 +62,8 @@ export const authController = {
       return c.json({ data: null, error: 'Internal server error' }, 500)
     }
   },
+
+  async logout(c: Context) {
+    return c.json({ data: null, message: 'Logged out successfully' })
+  },
 }

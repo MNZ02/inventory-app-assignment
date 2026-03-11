@@ -69,6 +69,16 @@ The API runs at `http://localhost:3000`. Open the Expo app with Expo Go or a dev
 
 ---
 
+## Completed Updates (March 11, 2026)
+
+- **Expo startup scripts stabilized**: mobile scripts now support `dev`, `dev:lan`, `dev:localhost`, and `dev:tunnel`.
+- **Root route fixed**: added `app/index.tsx` redirect so Expo Go does not land on unmatched route when opening `/`.
+- **Ngrok dependency path made optional**: tunnel mode is explicit (`pnpm dev:tunnel`) instead of default.
+- **Worklets/Reanimated mismatch fixed for Expo SDK 54**: pinned `react-native-worklets` to `0.5.1` to match Expo Go native runtime and avoid `[WorkletsError]` crashes.
+- **Recommended restart flow documented in support**: restart Metro with `--clear`, fully close Expo Go, then rescan QR.
+
+---
+
 ## API Documentation
 
 All protected endpoints require `Authorization: Bearer <token>` header.

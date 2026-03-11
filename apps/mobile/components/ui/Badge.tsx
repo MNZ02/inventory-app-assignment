@@ -1,27 +1,24 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
 interface BadgeProps {
   label: string
   variant?: 'success' | 'danger' | 'warning' | 'info'
+  className?: string
 }
 
-export function Badge({ label, variant = 'info' }: BadgeProps) {
+export function Badge({ label, variant = 'info', className }: BadgeProps) {
+  const baseClasses = "rounded-full px-2.5 py-0.5 self-start";
+  
+  const variants = {
+    success: { bg: "bg-green-100", text: "text-green-700" },
+    danger: { bg: "bg-red-100", text: "text-red-700" },
+    warning: { bg: "bg-yellow-100", text: "text-yellow-800" },
+    info: { bg: "bg-blue-100", text: "text-blue-700" }
+  };
+  
   return (
-    <View style={[styles.base, styles[variant]]}>
-      <Text style={[styles.text, styles[`${variant}Text` as keyof typeof styles]]}>{label}</Text>
+    <View className={`${baseClasses} ${variants[variant].bg} ${className || ''}`}>
+      <Text className={`text-xs font-semibold ${variants[variant].text}`}>{label}</Text>
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  base: { borderRadius: 99, paddingHorizontal: 8, paddingVertical: 2, alignSelf: 'flex-start' },
-  success: { backgroundColor: '#dcfce7' },
-  danger: { backgroundColor: '#fee2e2' },
-  warning: { backgroundColor: '#fef9c3' },
-  info: { backgroundColor: '#dbeafe' },
-  text: { fontSize: 12, fontWeight: '600' },
-  successText: { color: '#15803d' },
-  dangerText: { color: '#b91c1c' },
-  warningText: { color: '#854d0e' },
-  infoText: { color: '#1d4ed8' },
-})

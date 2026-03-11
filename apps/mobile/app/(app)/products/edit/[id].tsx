@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,6 +8,7 @@ import { useProduct, useProducts } from '../../../../hooks/useProducts'
 import { Button } from '../../../../components/ui/Button'
 import { Input } from '../../../../components/ui/Input'
 import { LoadingSpinner } from '../../../../components/ui/LoadingSpinner'
+import { BackButton } from '../../../../components/ui/BackButton'
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -60,6 +61,13 @@ export default function EditProductScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <Stack.Screen 
+        options={{ 
+          title: 'Edit Product',
+          headerLeft: () => <BackButton />,
+          headerRight: () => null 
+        }} 
+      />
       <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Edit Product</Text>
 
@@ -102,10 +110,10 @@ export default function EditProductScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
-  content: { padding: 16, paddingBottom: 40 },
-  title: { fontSize: 24, fontWeight: '700', color: '#111827', marginBottom: 20 },
-  errorBox: { backgroundColor: '#fee2e2', borderRadius: 8, padding: 12, marginBottom: 16 },
-  errorText: { color: '#b91c1c', fontSize: 14 },
-  button: { marginTop: 8 },
-  cancelButton: { marginTop: 12 },
+  content: { padding: 16, paddingBottom: 60 },
+  title: { fontSize: 28, fontFamily: 'Inter_700Bold', color: '#111827', marginBottom: 24, letterSpacing: -0.5 },
+  errorBox: { backgroundColor: '#fee2e2', borderRadius: 12, padding: 14, marginBottom: 20 },
+  errorText: { color: '#b91c1c', fontSize: 14, fontFamily: 'Inter_500Medium' },
+  button: { marginTop: 12 },
+  cancelButton: { marginTop: 14 },
 })

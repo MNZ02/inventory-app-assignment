@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native'
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import { Link } from 'expo-router'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -33,50 +34,58 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Sign In</Text>
-        <Text style={styles.subtitle}>Welcome back to Inventory</Text>
+        <Animated.View entering={FadeInUp.duration(500).springify()}>
+          <Animated.Text entering={FadeInDown.delay(100).duration(400)} style={styles.title}>Sign In</Animated.Text>
+          <Animated.Text entering={FadeInDown.delay(150).duration(400)} style={styles.subtitle}>Welcome back to Inventory</Animated.Text>
 
-        {serverError ? <View style={styles.errorBox}><Text style={styles.errorText}>{serverError}</Text></View> : null}
+          {serverError ? <View style={styles.errorBox}><Text style={styles.errorText}>{serverError}</Text></View> : null}
 
-        <Controller
-          control={control}
-          name="email"
-          render={({ field: { onChange, value, onBlur } }) => (
-            <Input
-              label="Email"
-              placeholder="you@example.com"
-              autoCapitalize="none"
-              keyboardType="email-address"
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              error={errors.email?.message}
+          <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, value, onBlur } }) => (
+                <Input
+                  label="Email"
+                  placeholder="you@example.com"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  error={errors.email?.message}
+                />
+              )}
             />
-          )}
-        />
+          </Animated.View>
 
-        <Controller
-          control={control}
-          name="password"
-          render={({ field: { onChange, value, onBlur } }) => (
-            <Input
-              label="Password"
-              placeholder="Your password"
-              secureTextEntry
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              error={errors.password?.message}
+          <Animated.View entering={FadeInDown.delay(280).duration(400)}>
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, value, onBlur } }) => (
+                <Input
+                  label="Password"
+                  placeholder="Your password"
+                  secureTextEntry
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  error={errors.password?.message}
+                />
+              )}
             />
-          )}
-        />
+          </Animated.View>
 
-        <Button title="Sign In" loading={isSubmitting} onPress={handleSubmit(onSubmit)} style={styles.button} />
+          <Animated.View entering={FadeInDown.delay(360).duration(400)}>
+            <Button title="Sign In" loading={isSubmitting} onPress={handleSubmit(onSubmit)} style={styles.button} />
+          </Animated.View>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
-          <Link href="/(auth)/register"><Text style={styles.link}>Register</Text></Link>
-        </View>
+          <Animated.View entering={FadeInDown.delay(420).duration(400)} style={styles.footer}>
+            <Text style={styles.footerText}>Don't have an account? </Text>
+            <Link href="/(auth)/register"><Text style={styles.link}>Register</Text></Link>
+          </Animated.View>
+        </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
   )
@@ -84,12 +93,12 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: 24, justifyContent: 'center', backgroundColor: '#f9fafb' },
-  title: { fontSize: 28, fontWeight: '700', color: '#111827', marginBottom: 4 },
-  subtitle: { fontSize: 16, color: '#6b7280', marginBottom: 32 },
-  errorBox: { backgroundColor: '#fee2e2', borderRadius: 8, padding: 12, marginBottom: 16 },
-  errorText: { color: '#b91c1c', fontSize: 14 },
-  button: { marginTop: 8 },
-  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
-  footerText: { color: '#6b7280' },
-  link: { color: '#2563eb', fontWeight: '600' },
+  title: { fontSize: 32, fontFamily: 'Inter_700Bold', color: '#111827', marginBottom: 8, letterSpacing: -1 },
+  subtitle: { fontSize: 17, fontFamily: 'Inter_400Regular', color: '#6b7280', marginBottom: 36 },
+  errorBox: { backgroundColor: '#fee2e2', borderRadius: 12, padding: 14, marginBottom: 20 },
+  errorText: { color: '#b91c1c', fontSize: 14, fontFamily: 'Inter_500Medium' },
+  button: { marginTop: 12 },
+  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 28 },
+  footerText: { color: '#6b7280', fontFamily: 'Inter_400Regular', fontSize: 15 },
+  link: { color: '#2563eb', fontFamily: 'Inter_600SemiBold', fontSize: 15 },
 })

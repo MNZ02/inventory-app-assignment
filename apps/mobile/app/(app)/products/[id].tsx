@@ -9,13 +9,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import { useProduct } from '../../../hooks/useProducts'
 import { api } from '../../../lib/api'
 import { Card } from '../../../components/ui/Card'
 import { Button } from '../../../components/ui/Button'
 import { Badge } from '../../../components/ui/Badge'
 import { LoadingSpinner } from '../../../components/ui/LoadingSpinner'
+import { BackButton } from '../../../components/ui/BackButton'
 import type { Transaction } from '@inventory/types'
 
 export default function ProductDetailScreen() {
@@ -74,6 +75,13 @@ export default function ProductDetailScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Stack.Screen 
+        options={{ 
+          title: 'Product Details',
+          headerLeft: () => <BackButton />,
+          headerRight: () => null 
+        }} 
+      />
       <View style={styles.header}>
         <View>
           <Text style={styles.name}>{product.name}</Text>
@@ -141,30 +149,30 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 const rowStyles = StyleSheet.create({
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
-  label: { fontSize: 14, color: '#6b7280' },
-  value: { fontSize: 14, color: '#111827', fontWeight: '500', flex: 1, textAlign: 'right' },
+  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
+  label: { fontSize: 15, fontFamily: 'Inter_400Regular', color: '#6b7280' },
+  value: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: '#111827', flex: 1, textAlign: 'right' },
 })
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
   content: { padding: 16, paddingBottom: 40 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  errorText: { color: '#dc2626' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
-  name: { fontSize: 22, fontWeight: '700', color: '#111827' },
-  sku: { fontSize: 13, color: '#6b7280', marginTop: 2 },
-  stockCard: { marginBottom: 12, alignItems: 'center', paddingVertical: 20 },
-  stockLabel: { fontSize: 14, color: '#6b7280' },
-  stockValue: { fontSize: 36, fontWeight: '700', marginTop: 4 },
+  errorText: { color: '#dc2626', fontFamily: 'Inter_500Medium', fontSize: 16 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
+  name: { fontSize: 26, fontFamily: 'Inter_700Bold', color: '#111827', letterSpacing: -0.5 },
+  sku: { fontSize: 14, fontFamily: 'Inter_500Medium', color: '#6b7280', marginTop: 4 },
+  stockCard: { marginBottom: 16, alignItems: 'center', paddingVertical: 24, borderRadius: 20 },
+  stockLabel: { fontSize: 15, fontFamily: 'Inter_500Medium', color: '#6b7280' },
+  stockValue: { fontSize: 40, fontFamily: 'Inter_700Bold', marginTop: 8 },
   stockOk: { color: '#16a34a' },
   stockLow: { color: '#dc2626' },
-  lowStockWarning: { fontSize: 13, color: '#ea580c', marginTop: 4 },
-  detailCard: { marginBottom: 16 },
+  lowStockWarning: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#ea580c', marginTop: 6 },
+  detailCard: { marginBottom: 20, borderRadius: 20, padding: 16 },
   actionRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
   actionBtn: { flex: 1 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalSheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24 },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 16 },
-  modalInput: { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 12, fontSize: 18, color: '#111827', marginBottom: 16, textAlign: 'center' },
+  modalSheet: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },
+  modalTitle: { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#111827', marginBottom: 20 },
+  modalInput: { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 20, fontFamily: 'Inter_600SemiBold', color: '#111827', marginBottom: 20, textAlign: 'center' },
 })
