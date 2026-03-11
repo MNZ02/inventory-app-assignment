@@ -203,10 +203,24 @@ export default function ProductsScreen() {
                     <Text className="text-text-muted dark:text-text-muted text-[12px] mt-0.5">SKU: {item.sku}</Text>
                     <View className="flex-row items-center mt-1">
                       <Text className="text-text-primary dark:text-text-primary-dark font-bold text-sm mr-2">{item.quantityInStock} Units</Text>
-                      <View className="flex-row items-center">
-                        <Ionicons name="trending-up" size={12} color="#22C55E" />
-                        <Text className="text-success text-[10px] font-bold ml-0.5">12%</Text>
-                      </View>
+                      {item.trend && (
+                        <View className="flex-row items-center">
+                          {item.trend.value !== 0 && (
+                            <Ionicons 
+                              name={item.trend.value > 0 ? "trending-up" : "trending-down"} 
+                              size={12} 
+                              color={item.trend.value > 0 ? "#22C55E" : "#EF4444"} 
+                            />
+                          )}
+                          <Text 
+                            className={`text-[10px] font-bold ml-0.5 ${
+                              item.trend.value > 0 ? 'text-success' : item.trend.value < 0 ? 'text-danger' : 'text-text-muted'
+                            }`}
+                          >
+                            {item.trend.value > 0 ? '+' : ''}{item.trend.value}{item.trend.kind === 'percent' ? '%' : 'u'}
+                          </Text>
+                        </View>
+                      )}
                     </View>
                   </View>
                   <Badge label={status.label} variant={status.variant} />

@@ -5,6 +5,7 @@ import authRoutes from './routes/auth'
 import productRoutes from './routes/products'
 import transactionRoutes from './routes/transactions'
 import dashboardRoutes from './routes/dashboard'
+import uploadRoutes from './routes/upload'
 
 const app = new Hono()
 
@@ -17,6 +18,7 @@ app.route('/auth', authRoutes)
 app.route('/products', productRoutes)
 app.route('/transactions', transactionRoutes)
 app.route('/dashboard', dashboardRoutes)
+app.route('/upload', uploadRoutes)
 
 app.notFound((c) => c.json({ data: null, error: 'Not found' }, 404))
 app.onError((err, c) => {

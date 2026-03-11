@@ -9,7 +9,8 @@ export interface Product {
   quantityInStock: number
   supplierName: string
   createdAt: string
+  trend?: { kind: 'percent' | 'units'; value: number } | null
 }
 
-export type CreateProductInput = Omit<Product, 'id' | 'createdAt'>
+export type CreateProductInput = Omit<Product, 'id' | 'createdAt' | 'trend'>
 export type UpdateProductInput = Partial<CreateProductInput>

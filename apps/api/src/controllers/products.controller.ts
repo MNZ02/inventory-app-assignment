@@ -10,7 +10,13 @@ export const productSchema = z.object({
   price: z.number().positive(),
   quantityInStock: z.number().int().min(0),
   supplierName: z.string().min(1),
-  imageUrl: z.string().optional(),
+  imageUrl: z
+    .string()
+    .url()
+    .refine((url) => url.startsWith('https://'), {
+      message: 'Must be an HTTPS URL',
+    })
+    .optional(),
 })
 
 export const productsController = {
@@ -33,6 +39,7 @@ export const productsController = {
     const body = await c.req.json().catch(() => null)
     const parsed = productSchema.safeParse(body)
     if (!parsed.success) {
+      console.error('Product creation validation failed:', parsed.error.flatten())
       return c.json({ data: null, error: parsed.error.flatten() }, 400)
     }
 
@@ -52,6 +59,7 @@ export const productsController = {
     const body = await c.req.json().catch(() => null)
     const parsed = productSchema.partial().safeParse(body)
     if (!parsed.success) {
+      console.error('Product update validation failed:', parsed.error.flatten())
       return c.json({ data: null, error: parsed.error.flatten() }, 400)
     }
 

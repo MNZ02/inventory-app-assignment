@@ -10,6 +10,7 @@ import { Input } from '../../../components/ui/Input'
 import { Card } from '../../../components/ui/Card'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
+import { uploadProductImage } from '../../../lib/api'
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -37,7 +38,11 @@ export default function AddProductScreen() {
   const onSubmit = async (data: FormData) => {
     setServerError(null)
     try {
-      await createProduct({ ...data, imageUrl: image || undefined })
+      let finalImageUrl = image || undefined;
+      if (image && !image.startsWith('http')) {
+        finalImageUrl = await uploadProductImage(image);
+      }
+      await createProduct({ ...data, imageUrl: finalImageUrl })
       Alert.alert('Success', 'Product created successfully')
       router.back()
     } catch (err: any) {
@@ -51,11 +56,11 @@ export default function AddProductScreen() {
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
-      base64: true,
+      base64: false,
     });
 
-    if (!result.canceled && result.assets[0].base64) {
-      setImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
+    if (!result.canceled && result.assets[0].uri) {
+      setImage(result.assets[0].uri);
     }
   };
 

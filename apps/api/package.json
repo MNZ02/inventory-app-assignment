@@ -10,8 +10,9 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
-    "@inventory/types": "workspace:*",
     "@hono/node-server": "^1.13.7",
+    "@inventory/types": "workspace:*",
+    "cloudinary": "^2.9.0",
     "drizzle-orm": "^0.43.0",
     "hono": "^4.7.7",
     "jose": "^5.10.0",

@@ -23,6 +23,8 @@ interface DashboardData {
   lowStockItems: Product[]
   recentTransactions: (Transaction & { date: string })[]
   stockFlow: { date: string; units: number }[]
+  stockFlowHasTransactions: boolean
+  stockFlowNetTotal: number
 }
 
 export default function DashboardScreen() {
@@ -84,8 +86,8 @@ export default function DashboardScreen() {
 
   const chartData = {
     labels: data?.stockFlow?.map(f => {
-      const d = new Date(f.date);
-      return d.toLocaleDateString('en-US', { weekday: 'short' });
+      const d = new Date(`${f.date}T00:00:00Z`)
+      return d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })
     }) || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     datasets: [
       {
@@ -93,6 +95,33 @@ export default function DashboardScreen() {
       },
     ],
   };
+
+  const totalNetUnits = data?.stockFlowNetTotal ?? 0;
+  const isPositive = totalNetUnits > 0;
+  const isNegative = totalNetUnits < 0;
+  
+  const hasTransactions = data?.stockFlowHasTransactions ?? false;
+  const isAllZero = data?.stockFlow?.every(d => d.units === 0) ?? true;
+  const canRenderBarChart = !isAllZero;
+
+  let netMessage = '';
+  if (!hasTransactions) {
+    netMessage = 'No stock movement in last 7 days';
+  } else if (totalNetUnits === 0) {
+    netMessage = 'Net 0 units in last 7 days';
+  } else if (isPositive) {
+    netMessage = `+${totalNetUnits} Net Inventory Units`;
+  } else {
+    netMessage = `${totalNetUnits} Net Inventory Units`;
+  }
+
+  const netMessageColor = !hasTransactions 
+    ? "text-text-muted dark:text-text-muted"
+    : isPositive 
+      ? "text-success dark:text-success" 
+      : isNegative 
+        ? "text-danger dark:text-danger-dark" 
+        : "text-text-muted dark:text-text-muted";
 
   return (
     <ScrollView 
@@ -142,7 +171,7 @@ export default function DashboardScreen() {
             <Ionicons name="close-circle-outline" size={18} color="#F87171" />
           </View>
           <Text className="text-text-muted dark:text-text-muted text-[10px] absolute top-4 right-4 font-bold">Weekly ↓</Text>
-          <Text className="text-text-primary dark:text-text-primary-dark text-[28px] font-[800] leading-8">{data?.lowStockItems.filter(i => i.quantityInStock === 0).length ?? 0}</Text>
+          <Text className="text-text-primary dark:text-text-primary-dark text-[28px] font-[800] leading-8">{(data?.lowStockItems ?? []).filter(i => i.quantityInStock === 0).length}</Text>
           <Text className="text-text-muted dark:text-text-muted text-[13px] font-[400] mt-1">Out of Stock</Text>
         </Card>
 
@@ -151,7 +180,7 @@ export default function DashboardScreen() {
             <Ionicons name="warning-outline" size={18} color="#FB923C" />
           </View>
           <Text className="text-text-muted dark:text-text-muted text-[10px] absolute top-4 right-4 font-bold">Weekly ↓</Text>
-          <Text className="text-text-primary dark:text-text-primary-dark text-[28px] font-[800] leading-8">{data?.lowStockItems.length ?? 0}</Text>
+          <Text className="text-text-primary dark:text-text-primary-dark text-[28px] font-[800] leading-8">{(data?.lowStockItems ?? []).length}</Text>
           <Text className="text-text-muted dark:text-text-muted text-[13px] font-[400] mt-1">Low Stock</Text>
         </Card>
       </View>
@@ -226,39 +255,48 @@ export default function DashboardScreen() {
           <Text className="text-text-primary dark:text-text-primary-dark text-xl font-[800]">Stock Flow</Text>
           <Text className="text-text-muted dark:text-text-muted font-bold text-xs uppercase">Last 7 days</Text>
         </View>
-        <Text className="text-success dark:text-success font-bold text-sm mb-4">+18% Rise in Total Inventory Units</Text>
+        <Text className={`${netMessageColor} font-bold text-sm mb-4`}>{netMessage}</Text>
         
-        <Card className="p-0 overflow-hidden items-center dark:bg-card-dark">
-          <BarChart
-            data={chartData}
-            width={width - 40}
-            height={220}
-            yAxisLabel=""
-            yAxisSuffix=""
-            chartConfig={{
-              backgroundColor: isDark ? '#1F2937' : '#FFFFFF',
-              backgroundGradientFrom: isDark ? '#1F2937' : '#FFFFFF',
-              backgroundGradientTo: isDark ? '#1F2937' : '#FFFFFF',
-              decimalPlaces: 0,
-              color: (opacity = 1) => `rgba(167, 139, 250, ${opacity})`,
-              labelColor: (opacity = 1) => isDark ? `rgba(156, 163, 175, ${opacity})` : `rgba(107, 114, 128, ${opacity})`,
-              style: {
+        {canRenderBarChart ? (
+          <Card className="p-0 overflow-hidden items-center dark:bg-card-dark">
+            <BarChart
+              data={chartData}
+              width={width - 40}
+              height={220}
+              yAxisLabel=""
+              yAxisSuffix=""
+              chartConfig={{
+                backgroundColor: isDark ? '#1F2937' : '#FFFFFF',
+                backgroundGradientFrom: isDark ? '#1F2937' : '#FFFFFF',
+                backgroundGradientTo: isDark ? '#1F2937' : '#FFFFFF',
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(167, 139, 250, ${opacity})`,
+                labelColor: (opacity = 1) => isDark ? `rgba(156, 163, 175, ${opacity})` : `rgba(107, 114, 128, ${opacity})`,
+                style: {
+                  borderRadius: 16,
+                },
+                propsForLabels: {
+                  fontSize: 10,
+                  fontWeight: '600'
+                },
+                barPercentage: 0.6,
+              }}
+              style={{
+                marginVertical: 16,
                 borderRadius: 16,
-              },
-              propsForLabels: {
-                fontSize: 10,
-                fontWeight: '600'
-              },
-              barPercentage: 0.6,
-            }}
-            style={{
-              marginVertical: 16,
-              borderRadius: 16,
-            }}
-            showValuesOnTopOfBars
-            fromZero
-          />
-        </Card>
+              }}
+              showValuesOnTopOfBars
+              fromZero
+            />
+          </Card>
+        ) : (
+          <Card className="items-center py-10 dark:bg-card-dark">
+            <Ionicons name={hasTransactions ? "swap-horizontal-outline" : "bar-chart-outline"} size={48} color={isDark ? "#4B5563" : "#D1D5DB"} />
+            <Text className="text-text-muted dark:text-text-muted mt-3 font-[400] text-center">
+              {hasTransactions ? "Net 0 units this week" : "No stock movement yet\nRecord transactions to see your stock flow"}
+            </Text>
+          </Card>
+        )}
       </View>
     </ScrollView>
   )

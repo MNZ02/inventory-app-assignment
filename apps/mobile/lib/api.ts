@@ -26,3 +26,45 @@ export const api = {
   delete: <T>(url: string) =>
     apiClient.delete<{ data: T; message?: string; error?: string }>(url).then((r) => r.data),
 }
+
+export const uploadProductImage = async (fileUri: string) => {
+  try {
+    const { data: signData } = await api.get<{
+      timestamp: number
+      signature: string
+      cloudName: string
+      apiKey: string
+      folder: string
+    }>('/upload/sign')
+
+    const formData = new FormData()
+    // Using any for formData.append as React Native's FormData typing can be restrictive
+    formData.append('file', {
+      uri: fileUri,
+      type: 'image/jpeg',
+      name: 'upload.jpg',
+    } as any)
+    formData.append('api_key', signData.apiKey)
+    formData.append('timestamp', signData.timestamp.toString())
+    formData.append('signature', signData.signature)
+    formData.append('folder', signData.folder)
+
+    const uploadRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${signData.cloudName}/image/upload`,
+      {
+        method: 'POST',
+        body: formData,
+      }
+    )
+
+    const uploadData = await uploadRes.json()
+    if (!uploadRes.ok) {
+      throw new Error(uploadData.error?.message || 'Upload failed')
+    }
+
+    return uploadData.secure_url as string
+  } catch (error) {
+    console.error('Image upload failed:', error)
+    throw error
+  }
+}

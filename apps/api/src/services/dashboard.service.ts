@@ -1,11 +1,12 @@
-import { lt, eq, desc, gt, sql } from 'drizzle-orm'
+import { lt, eq, desc, gte, sql } from 'drizzle-orm'
 import { db } from '../db'
 import { products, transactions, users, type Product as DbProduct } from '../db/schema'
 import type { Product, Transaction } from '@inventory/types'
 
 const toProduct = (row: DbProduct): Product => ({
   ...row,
-  description: row.description || undefined,
+  imageUrl: row.imageUrl ?? undefined,
+  description: row.description ?? undefined,
   price: Number(row.price),
   createdAt: row.createdAt.toISOString(),
 })
@@ -16,6 +17,8 @@ interface DashboardStats {
   lowStockItems: Product[]
   recentTransactions: Transaction[]
   stockFlow: { date: string; units: number }[]
+  stockFlowHasTransactions: boolean
+  stockFlowNetTotal: number
 }
 
 export const dashboardService = {
@@ -50,32 +53,36 @@ export const dashboardService = {
       .orderBy(desc(transactions.createdAt))
       .limit(10)
 
-    // Calculate stock flow for the last 7 days
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-    sevenDaysAgo.setHours(0, 0, 0, 0);
+    // Calculate stock flow for the last 7 UTC calendar days.
+    const now = new Date()
+    const startOfTodayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+    const sevenDaysAgoUtc = new Date(startOfTodayUtc)
+    sevenDaysAgoUtc.setUTCDate(startOfTodayUtc.getUTCDate() - 6)
 
     const recentFlowRows = await db
       .select({
-        date: sql<Date>`date_trunc('day', ${transactions.createdAt})`,
-        units: sql<number>`sum(case when ${transactions.type} = 'IN' then ${transactions.quantityChange} else 0 end)::int`
+        date: sql<string>`to_char(date_trunc('day', ${transactions.createdAt} AT TIME ZONE 'UTC'), 'YYYY-MM-DD')`,
+        units: sql<number>`sum(case when ${transactions.type} = 'IN' then ${transactions.quantityChange} when ${transactions.type} = 'OUT' then -${transactions.quantityChange} else 0 end)::int`
       })
       .from(transactions)
-      .where(gt(transactions.createdAt, sevenDaysAgo))
-      .groupBy(sql`date_trunc('day', ${transactions.createdAt})`)
-      .orderBy(sql`date_trunc('day', ${transactions.createdAt})`);
+      .where(gte(transactions.createdAt, sevenDaysAgoUtc))
+      .groupBy(sql`date_trunc('day', ${transactions.createdAt} AT TIME ZONE 'UTC')`)
+      .orderBy(sql`date_trunc('day', ${transactions.createdAt} AT TIME ZONE 'UTC')`)
 
-    const flowMap = new Map(recentFlowRows.map(row => [row.date.toISOString().split('T')[0], row.units]));
+    const flowMap = new Map(recentFlowRows.map((row) => [row.date, row.units]))
+
+    const stockFlowHasTransactions = recentFlowRows.length > 0;
+    const stockFlowNetTotal = recentFlowRows.reduce((sum, row) => sum + row.units, 0);
 
     const stockFlow = Array.from({ length: 7 }).map((_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
-      const dateStr = d.toISOString().split('T')[0];
+      const d = new Date(startOfTodayUtc)
+      d.setUTCDate(startOfTodayUtc.getUTCDate() - (6 - i))
+      const dateStr = d.toISOString().split('T')[0]
       return {
         date: dateStr,
-        units: flowMap.get(dateStr) || 0
-      };
-    });
+        units: flowMap.get(dateStr) || 0,
+      }
+    })
 
     return {
       totalProducts,
@@ -86,6 +93,8 @@ export const dashboardService = {
         date: row.date.toISOString(),
       })),
       stockFlow,
+      stockFlowHasTransactions,
+      stockFlowNetTotal,
     }
   },
 }

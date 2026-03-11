@@ -11,6 +11,7 @@ import { LoadingSpinner } from '../../../../components/ui/LoadingSpinner'
 import { Card } from '../../../../components/ui/Card'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
+import { uploadProductImage } from '../../../../lib/api'
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -54,7 +55,16 @@ export default function EditProductScreen() {
   const onSubmit = async (data: FormData) => {
     setServerError(null)
     try {
-      await updateProduct(id, { ...data, imageUrl: image || undefined })
+      let finalImageUrl = image || undefined;
+      
+      // If it's a new local file, upload it
+      if (image && !image.startsWith('http')) {
+        finalImageUrl = await uploadProductImage(image);
+      }
+      
+      const payload: any = { ...data, imageUrl: finalImageUrl };
+
+      await updateProduct(id, payload)
       Alert.alert('Success', 'Product updated successfully')
       router.back()
     } catch (err: any) {
@@ -68,11 +78,11 @@ export default function EditProductScreen() {
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
-      base64: true,
+      base64: false,
     });
 
-    if (!result.canceled && result.assets[0].base64) {
-      setImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
+    if (!result.canceled && result.assets[0].uri) {
+      setImage(result.assets[0].uri);
     }
   };
 
