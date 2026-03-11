@@ -1,19 +1,23 @@
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { useColorScheme } from 'nativewind'
 
 export default function TabsLayout() {
+  const { colorScheme } = useColorScheme()
+  const isDark = colorScheme === 'dark'
+
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#A78BFA',
-        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarInactiveTintColor: isDark ? '#6B7280' : '#9CA3AF',
         tabBarStyle: {
           borderTopWidth: 1,
-          borderTopColor: '#E5E7EB',
+          borderTopColor: isDark ? '#374151' : '#E5E7EB',
           height: 70,
           paddingBottom: 10,
           paddingTop: 10,
-          backgroundColor: '#FFFFFF',
+          backgroundColor: isDark ? '#1F2937' : '#FFFFFF',
         },
         tabBarLabelStyle: {
           fontSize: 11,

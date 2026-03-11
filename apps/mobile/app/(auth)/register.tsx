@@ -41,21 +41,21 @@ export default function RegisterScreen() {
   }
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-white" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView className="flex-1 bg-white dark:bg-background-dark" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingTop: 60, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <Animated.View entering={FadeInUp.duration(600).springify()}>
-          <Text className="text-[40px] font-[900] text-text-primary leading-[40px]">CREATE</Text>
-          <Text className="text-[40px] font-[900] text-text-primary leading-[40px]">ACCOUNT</Text>
+          <Text className="text-[40px] font-[900] text-text-primary dark:text-text-primary-dark leading-[40px]">CREATE</Text>
+          <Text className="text-[40px] font-[900] text-text-primary dark:text-text-primary-dark leading-[40px]">ACCOUNT</Text>
           <Text className="text-[40px] font-[900] text-primary leading-[40px]">INVENTORY</Text>
           
-          <Text className="text-text-secondary mt-3 text-[15px] font-[400] leading-6 mb-10">
+          <Text className="text-text-secondary dark:text-text-muted mt-3 text-[15px] font-[400] leading-6 mb-10">
             Join thousands managing their inventory smarter.
           </Text>
         </Animated.View>
 
         {serverError ? (
-          <Animated.View entering={FadeInDown} className="bg-danger-light p-4 rounded-xl mb-4">
-            <Text className="text-danger text-sm font-medium">{serverError}</Text>
+          <Animated.View entering={FadeInDown} className="bg-danger-light dark:bg-danger-dark/20 p-4 rounded-xl mb-4">
+            <Text className="text-danger dark:text-danger text-sm font-medium">{serverError}</Text>
           </Animated.View>
         ) : null}
 
@@ -82,7 +82,7 @@ export default function RegisterScreen() {
               error={errors.password?.message}
               rightIcon={
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#9CA3AF" />
+                  <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#6B7280" />
                 </TouchableOpacity>
               }
             />
@@ -100,7 +100,7 @@ export default function RegisterScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(600)} className="flex-row justify-center mt-8">
-          <Text className="text-text-secondary font-[400] text-base">Already have an account? </Text>
+          <Text className="text-text-secondary dark:text-text-muted font-[400] text-base">Already have an account? </Text>
           <Link href="/(auth)/login">
             <Text className="text-primary font-bold text-base">Login</Text>
           </Link>

@@ -10,12 +10,14 @@ import {
   Image,
 } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import { useRouter } from 'expo-router'
+import { useRouter, useFocusEffect } from 'expo-router'
 import { useProducts } from '../../../../hooks/useProducts'
 import { Card } from '../../../../components/ui/Card'
 import { LoadingSpinner } from '../../../../components/ui/LoadingSpinner'
 import { Badge } from '../../../../components/ui/Badge'
 import { Ionicons } from '@expo/vector-icons'
+import { DarkModeToggle } from '../../../../components/ui/DarkModeToggle'
+import { LogoutButton } from '../../../../components/ui/LogoutButton'
 import type { Product } from '@inventory/types'
 
 const FILTERS = [
@@ -48,6 +50,12 @@ export default function ProductsScreen() {
     }
   }, [])
 
+  useFocusEffect(
+    useCallback(() => {
+      refetch()
+    }, [refetch])
+  )
+
   const handleSearch = useCallback((text: string) => {
     setSearch(text)
     if (searchTimer.current) clearTimeout(searchTimer.current)
@@ -66,16 +74,20 @@ export default function ProductsScreen() {
   if (isLoading && products.length === 0) return <LoadingSpinner />
 
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1 bg-background dark:bg-background-dark">
       {/* Header */}
       <View className="px-5 pt-14 pb-4 flex-row justify-between items-center">
-        <Text className="text-text-primary text-[28px] font-[900]">Inventory</Text>
-        <TouchableOpacity 
-          className="bg-primary-light px-4 py-2 rounded-full"
-          onPress={() => router.push('/(app)/products/add')}
-        >
-          <Text className="text-primary font-bold text-sm">Add Product</Text>
-        </TouchableOpacity>
+        <Text className="text-text-primary dark:text-text-primary-dark text-[28px] font-[900]">Inventory</Text>
+        <View className="flex-row items-center">
+          <TouchableOpacity 
+            className="bg-primary-light dark:bg-primary-dark/20 px-4 py-2 rounded-full mr-2"
+            onPress={() => router.push('/(app)/products/add')}
+          >
+            <Text className="text-primary dark:text-primary font-bold text-sm">Add Product</Text>
+          </TouchableOpacity>
+          <DarkModeToggle />
+          <LogoutButton />
+        </View>
       </View>
 
       {/* Filter Pills */}
@@ -85,10 +97,13 @@ export default function ProductsScreen() {
             <TouchableOpacity 
               key={filter.value}
               onPress={() => setActiveFilter(filter.value)}
-              className={`mr-2 px-5 py-2.5 rounded-full ${activeFilter === filter.value ? 'bg-primary' : 'bg-background-dark border border-border'}`}
-              style={{ backgroundColor: activeFilter === filter.value ? '#A78BFA' : '#F5F5F7' }}
+              className={`mr-2 px-5 py-2.5 rounded-full ${
+                activeFilter === filter.value 
+                  ? 'bg-primary' 
+                  : 'bg-background-dark dark:bg-card-dark border border-border dark:border-border-dark'
+              }`}
             >
-              <Text className={`font-bold text-sm ${activeFilter === filter.value ? 'text-white' : 'text-text-secondary'}`}>
+              <Text className={`font-bold text-sm ${activeFilter === filter.value ? 'text-white' : 'text-text-secondary dark:text-text-muted'}`}>
                 {filter.label}
               </Text>
             </TouchableOpacity>
@@ -98,10 +113,10 @@ export default function ProductsScreen() {
 
       {/* Search Bar */}
       <View className="px-5 mb-4">
-        <View className="flex-row items-center bg-background-dark rounded-[12px] px-4 py-3 border border-transparent" style={{ backgroundColor: '#F5F5F7' }}>
+        <View className="flex-row items-center bg-background-dark dark:bg-card-dark rounded-[12px] px-4 py-3 border border-transparent dark:border-border-dark">
           <Ionicons name="search-outline" size={20} color="#9CA3AF" />
           <TextInput
-            className="flex-1 ml-2 text-text-primary text-[15px] py-1"
+            className="flex-1 ml-2 text-text-primary dark:text-text-primary-dark text-[15px] py-1"
             placeholder="Search products..."
             placeholderTextColor="#9CA3AF"
             value={search}
@@ -115,7 +130,7 @@ export default function ProductsScreen() {
         data={filteredProducts}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
-        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#A78BFA" />}
         ListEmptyComponent={
           <View className="items-center py-20">
             <Ionicons name="cube-outline" size={64} color="#D1D5DB" />
@@ -125,10 +140,10 @@ export default function ProductsScreen() {
         renderItem={({ item, index }: { item: Product; index: number }) => {
           const status = getStockStatus(item.quantityInStock);
           return (
-            <Animated.View entering={FadeInDown.delay(index * 50).duration(400)}>
+            <Animated.View entering={FadeInDown.delay(Math.min(index, 10) * 50).duration(400)}>
               <TouchableOpacity onPress={() => router.push(`/(app)/products/${item.id}`)}>
                 <Card className="mb-3 p-3 flex-row items-center">
-                  <View className="w-[60px] h-[60px] bg-background rounded-[12px] items-center justify-center mr-4">
+                  <View className="w-[60px] h-[60px] bg-background dark:bg-background-dark rounded-[12px] items-center justify-center mr-4">
                     {item.imageUrl ? (
                       <Image source={{ uri: item.imageUrl }} className="w-full h-full rounded-[12px]" />
                     ) : (
@@ -136,10 +151,10 @@ export default function ProductsScreen() {
                     )}
                   </View>
                   <View className="flex-1">
-                    <Text className="text-text-primary font-[700] text-[15px]" numberOfLines={1}>{item.name}</Text>
-                    <Text className="text-text-muted text-[12px] mt-0.5">SKU: {item.sku}</Text>
+                    <Text className="text-text-primary dark:text-text-primary-dark font-[700] text-[15px]" numberOfLines={1}>{item.name}</Text>
+                    <Text className="text-text-muted dark:text-text-muted text-[12px] mt-0.5">SKU: {item.sku}</Text>
                     <View className="flex-row items-center mt-1">
-                      <Text className="text-text-primary font-bold text-sm mr-2">{item.quantityInStock} Units</Text>
+                      <Text className="text-text-primary dark:text-text-primary-dark font-bold text-sm mr-2">{item.quantityInStock} Units</Text>
                       <View className="flex-row items-center">
                         <Ionicons name="trending-up" size={12} color="#22C55E" />
                         <Text className="text-success text-[10px] font-bold ml-0.5">12%</Text>

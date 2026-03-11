@@ -10,6 +10,7 @@ export const productSchema = z.object({
   price: z.number().positive(),
   quantityInStock: z.number().int().min(0),
   supplierName: z.string().min(1),
+  imageUrl: z.string().optional(),
 })
 
 export const productsController = {

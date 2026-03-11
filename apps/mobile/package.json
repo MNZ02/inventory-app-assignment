@@ -45,6 +45,7 @@
     "@babel/core": "^7.25.2",
     "@expo/ngrok": "^4.1.0",
     "@types/react": "~19.1.17",
+    "eslint-config-expo": "~10.0.0",
     "typescript": "^5.3.3"
   }
 }

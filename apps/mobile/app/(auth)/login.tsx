@@ -36,16 +36,16 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-white" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView className="flex-1 bg-white dark:bg-background-dark" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
         <View style={{ height: height * 0.55 }} className="px-5 justify-center">
           <Animated.View entering={FadeInUp.duration(600).springify()}>
-            <Text className="text-[52px] font-[900] text-text-primary leading-[52px]">PRECISION</Text>
+            <Text className="text-[52px] font-[900] text-text-primary dark:text-text-primary-dark leading-[52px]">PRECISION</Text>
             <Text className="text-[52px] font-[900] text-primary leading-[52px]">INVENTORY</Text>
-            <Text className="text-[52px] font-[900] text-text-primary leading-[52px]">FOR GROWING</Text>
-            <Text className="text-[52px] font-[900] text-text-primary leading-[52px]">BUSINESSES</Text>
+            <Text className="text-[52px] font-[900] text-text-primary dark:text-text-primary-dark leading-[52px]">FOR GROWING</Text>
+            <Text className="text-[52px] font-[900] text-text-primary dark:text-text-primary-dark leading-[52px]">BUSINESSES</Text>
             
-            <Text className="text-text-secondary mt-4 text-[15px] font-[400] leading-6">
+            <Text className="text-text-secondary dark:text-text-muted mt-4 text-[15px] font-[400] leading-6">
               Built to simplify complex workflows and give you complete visibility into your inventory.
             </Text>
           </Animated.View>
@@ -53,8 +53,8 @@ export default function LoginScreen() {
 
         <View className="px-5 pb-10">
           {serverError ? (
-            <Animated.View entering={FadeInDown} className="bg-danger-light p-4 rounded-xl mb-4">
-              <Text className="text-danger text-sm font-medium">{serverError}</Text>
+            <Animated.View entering={FadeInDown} className="bg-danger-light dark:bg-danger-dark/20 p-4 rounded-xl mb-4">
+              <Text className="text-danger dark:text-danger text-sm font-medium">{serverError}</Text>
             </Animated.View>
           ) : null}
 
@@ -93,7 +93,7 @@ export default function LoginScreen() {
                       <Ionicons 
                         name={showPassword ? "eye-off-outline" : "eye-outline"} 
                         size={20} 
-                        color="#9CA3AF" 
+                        color="#6B7280" 
                       />
                     </TouchableOpacity>
                   }
@@ -112,7 +112,7 @@ export default function LoginScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(400)} className="flex-row justify-center mt-6">
-            <Text className="text-text-secondary font-[400] text-base">Don't have an account? </Text>
+            <Text className="text-text-secondary dark:text-text-muted font-[400] text-base">Don&apos;t have an account? </Text>
             <Link href="/(auth)/register">
               <Text className="text-primary font-bold text-base">Register</Text>
             </Link>

@@ -10,11 +10,11 @@ export function Badge({ label, variant = 'default', className }: BadgeProps) {
   const baseClasses = "rounded-full px-3 py-1 self-start";
   
   const variants = {
-    success: { bg: "bg-success-light", text: "text-success" },
-    danger: { bg: "bg-danger-light", text: "text-danger" },
-    warning: { bg: "bg-warning-light", text: "text-warning" },
-    info: { bg: "bg-primary-light", text: "text-primary" },
-    default: { bg: "bg-background", text: "text-text-secondary" }
+    success: { bg: "bg-success-light dark:bg-success-dark/20", text: "text-success dark:text-success" },
+    danger: { bg: "bg-danger-light dark:bg-danger-dark/20", text: "text-danger dark:text-danger" },
+    warning: { bg: "bg-warning-light dark:bg-warning-dark/20", text: "text-warning dark:text-warning" },
+    info: { bg: "bg-primary-light dark:bg-primary/20", text: "text-primary dark:text-primary" },
+    default: { bg: "bg-background dark:bg-border-dark", text: "text-text-secondary dark:text-text-muted" }
   };
   
   return (

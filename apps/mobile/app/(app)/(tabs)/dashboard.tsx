@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { FlatList, ScrollView, Text, View, RefreshControl, TouchableOpacity, Dimensions } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import { useRouter } from 'expo-router'
+import { useRouter, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { api } from '../../../lib/api'
 import { Card } from '../../../components/ui/Card'
@@ -10,6 +10,9 @@ import { LoadingSpinner } from '../../../components/ui/LoadingSpinner'
 import { Button } from '../../../components/ui/Button'
 import { useAuth } from '../../../hooks/useAuth'
 import { BarChart } from 'react-native-chart-kit'
+import { DarkModeToggle } from '../../../components/ui/DarkModeToggle'
+import { LogoutButton } from '../../../components/ui/LogoutButton'
+import { useColorScheme } from 'nativewind'
 import type { Product, Transaction } from '@inventory/types'
 
 const { width } = Dimensions.get('window');
@@ -19,11 +22,14 @@ interface DashboardData {
   totalStockQuantity: number
   lowStockItems: Product[]
   recentTransactions: (Transaction & { date: string })[]
+  stockFlow: { date: string; units: number }[]
 }
 
 export default function DashboardScreen() {
   const router = useRouter()
   const { user } = useAuth()
+  const { colorScheme } = useColorScheme()
+  const isDark = colorScheme === 'dark'
   const [data, setData] = useState<DashboardData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -42,9 +48,11 @@ export default function DashboardScreen() {
     }
   }, [])
 
-  useEffect(() => {
-    fetchData()
-  }, [fetchData])
+  useFocusEffect(
+    useCallback(() => {
+      fetchData()
+    }, [fetchData])
+  )
 
   const onRefresh = useCallback(() => {
     setIsRefreshing(true)
@@ -66,87 +74,85 @@ export default function DashboardScreen() {
 
   if (error) {
     return (
-      <View className="flex-1 items-center justify-center p-6 bg-background">
+      <View className="flex-1 items-center justify-center p-6 bg-background dark:bg-background-dark">
         <Ionicons name="alert-circle-outline" size={48} color="#EF4444" />
-        <Text className="text-danger font-medium text-center mt-3">{error}</Text>
+        <Text className="text-danger dark:text-danger-dark font-medium text-center mt-3">{error}</Text>
         <Button title="Retry" onPress={fetchData} className="mt-4" />
       </View>
     )
   }
 
   const chartData = {
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    labels: data?.stockFlow?.map(f => {
+      const d = new Date(f.date);
+      return d.toLocaleDateString('en-US', { weekday: 'short' });
+    }) || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     datasets: [
       {
-        data: [45, 52, 38, 65, 48, 55, 60],
+        data: data?.stockFlow?.map(f => f.units) || [0, 0, 0, 0, 0, 0, 0],
       },
     ],
   };
 
   return (
     <ScrollView 
-      className="flex-1 bg-background" 
+      className="flex-1 bg-background dark:bg-background-dark" 
       contentContainerStyle={{ padding: 20, paddingTop: 60 }}
       refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
     >
       {/* Header */}
       <View className="flex-row items-center justify-between mb-8">
         <View className="flex-row items-center">
-          <View className="w-12 h-12 rounded-full bg-primary-light items-center justify-center mr-3">
-            <Text className="text-primary-dark font-bold text-lg">{getInitials(user?.name)}</Text>
+          <View className="w-12 h-12 rounded-full bg-primary-light dark:bg-primary/20 items-center justify-center mr-3">
+            <Text className="text-primary-dark dark:text-primary font-bold text-lg">{getInitials(user?.name)}</Text>
           </View>
           <View>
-            <Text className="text-text-muted text-[11px] font-[400] uppercase tracking-wider">{getGreeting()}</Text>
-            <Text className="text-text-primary text-[28px] font-[800] leading-8">{user?.name?.split(' ')[0]} 👋</Text>
+            <Text className="text-text-muted dark:text-text-muted text-[11px] font-[400] uppercase tracking-wider">{getGreeting()}</Text>
+            <Text className="text-text-primary dark:text-text-primary-dark text-[28px] font-[800] leading-8">{user?.name?.split(' ')[0]} 👋</Text>
           </View>
         </View>
         <View className="flex-row items-center">
-          <TouchableOpacity className="border border-border rounded-full px-4 py-2 mr-2">
-            <Text className="text-text-primary font-bold text-xs">Chat</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className="w-10 h-10 rounded-full border border-border items-center justify-center">
-            <Ionicons name="notifications-outline" size={20} color="#111111" />
-            <View className="absolute top-2 right-2 w-2 h-2 bg-danger rounded-full border-2 border-white" />
-          </TouchableOpacity>
+          <DarkModeToggle />
+          <LogoutButton />
         </View>
       </View>
 
       {/* Stats Grid */}
       <View className="flex-row flex-wrap justify-between mb-6">
-        <Card className="w-[48%] mb-4 items-start p-4 bg-primary relative overflow-hidden">
+        <Card className="w-[48%] mb-4 items-start p-4 bg-primary dark:bg-primary relative overflow-hidden">
           <View className="w-8 h-8 rounded-full bg-white/20 items-center justify-center mb-4">
             <Ionicons name="wallet-outline" size={18} color="#FFFFFF" />
           </View>
           <Text className="text-white/70 text-[10px] absolute top-4 right-4 font-bold">Weekly ↓</Text>
-          <Text className="text-white text-[28px] font-[800] leading-8">${(data?.totalStockQuantity || 0) * 125}</Text>
+          <Text className="text-white text-[28px] font-[800] leading-8">₹{(data?.totalStockQuantity || 0) * 125}</Text>
           <Text className="text-white/80 text-[13px] font-[400] mt-1">Total Stock Value</Text>
         </Card>
 
         <Card className="w-[48%] mb-4 items-start p-4 relative">
-          <View className="w-8 h-8 rounded-full bg-teal-50 items-center justify-center mb-4">
+          <View className="w-8 h-8 rounded-full bg-teal-50 dark:bg-teal-500/10 items-center justify-center mb-4">
             <Ionicons name="cube-outline" size={18} color="#2DD4BF" />
           </View>
-          <Text className="text-text-muted text-[10px] absolute top-4 right-4 font-bold">Weekly ↓</Text>
-          <Text className="text-text-primary text-[28px] font-[800] leading-8">{data?.totalStockQuantity ?? 0}</Text>
-          <Text className="text-text-muted text-[13px] font-[400] mt-1">Total Stock</Text>
+          <Text className="text-text-muted dark:text-text-muted text-[10px] absolute top-4 right-4 font-bold">Weekly ↓</Text>
+          <Text className="text-text-primary dark:text-text-primary-dark text-[28px] font-[800] leading-8">{data?.totalStockQuantity ?? 0}</Text>
+          <Text className="text-text-muted dark:text-text-muted text-[13px] font-[400] mt-1">Total Stock</Text>
         </Card>
 
         <Card className="w-[48%] mb-4 items-start p-4 relative">
-          <View className="w-8 h-8 rounded-full bg-red-50 items-center justify-center mb-4">
+          <View className="w-8 h-8 rounded-full bg-red-50 dark:bg-red-500/10 items-center justify-center mb-4">
             <Ionicons name="close-circle-outline" size={18} color="#F87171" />
           </View>
-          <Text className="text-text-muted text-[10px] absolute top-4 right-4 font-bold">Weekly ↓</Text>
-          <Text className="text-text-primary text-[28px] font-[800] leading-8">{data?.lowStockItems.filter(i => i.quantityInStock === 0).length ?? 0}</Text>
-          <Text className="text-text-muted text-[13px] font-[400] mt-1">Out of Stock</Text>
+          <Text className="text-text-muted dark:text-text-muted text-[10px] absolute top-4 right-4 font-bold">Weekly ↓</Text>
+          <Text className="text-text-primary dark:text-text-primary-dark text-[28px] font-[800] leading-8">{data?.lowStockItems.filter(i => i.quantityInStock === 0).length ?? 0}</Text>
+          <Text className="text-text-muted dark:text-text-muted text-[13px] font-[400] mt-1">Out of Stock</Text>
         </Card>
 
         <Card className="w-[48%] mb-4 items-start p-4 relative">
-          <View className="w-8 h-8 rounded-full bg-orange-50 items-center justify-center mb-4">
+          <View className="w-8 h-8 rounded-full bg-orange-50 dark:bg-orange-500/10 items-center justify-center mb-4">
             <Ionicons name="warning-outline" size={18} color="#FB923C" />
           </View>
-          <Text className="text-text-muted text-[10px] absolute top-4 right-4 font-bold">Weekly ↓</Text>
-          <Text className="text-text-primary text-[28px] font-[800] leading-8">{data?.lowStockItems.length ?? 0}</Text>
-          <Text className="text-text-muted text-[13px] font-[400] mt-1">Low Stock</Text>
+          <Text className="text-text-muted dark:text-text-muted text-[10px] absolute top-4 right-4 font-bold">Weekly ↓</Text>
+          <Text className="text-text-primary dark:text-text-primary-dark text-[28px] font-[800] leading-8">{data?.lowStockItems.length ?? 0}</Text>
+          <Text className="text-text-muted dark:text-text-muted text-[13px] font-[400] mt-1">Low Stock</Text>
         </Card>
       </View>
 
@@ -167,7 +173,7 @@ export default function DashboardScreen() {
 
       {/* Recent Transactions */}
       <View className="flex-row justify-between items-center mb-4">
-        <Text className="text-text-primary text-xl font-[800]">Recent Transactions</Text>
+        <Text className="text-text-primary dark:text-text-primary-dark text-xl font-[800]">Recent Transactions</Text>
         <TouchableOpacity onPress={() => router.push('/(app)/(tabs)/transactions')}>
           <Text className="text-primary font-bold text-[15px]">View all</Text>
         </TouchableOpacity>
@@ -176,7 +182,7 @@ export default function DashboardScreen() {
       {data?.recentTransactions.length === 0 ? (
         <Card className="items-center py-10 mb-8">
           <Ionicons name="receipt-outline" size={48} color="#D1D5DB" />
-          <Text className="text-text-muted mt-2 font-[400]">No transactions yet</Text>
+          <Text className="text-text-muted dark:text-text-muted mt-2 font-[400]">No transactions yet</Text>
         </Card>
       ) : (
         <View className="mb-8">
@@ -184,7 +190,7 @@ export default function DashboardScreen() {
             <Card key={item.id} className="mb-3 p-3">
               <View className="flex-row items-center justify-between">
                 <View className="flex-row items-center flex-1">
-                  <View className={`w-10 h-10 rounded-full items-center justify-center mr-3 ${item.type === 'IN' ? 'bg-success-light' : 'bg-danger-light'}`}>
+                  <View className={`w-10 h-10 rounded-full items-center justify-center mr-3 ${item.type === 'IN' ? 'bg-success-light dark:bg-success-dark/20' : 'bg-danger-light dark:bg-danger-dark/20'}`}>
                     <Ionicons 
                       name={item.type === 'IN' ? "arrow-up" : "arrow-down"} 
                       size={20} 
@@ -192,8 +198,8 @@ export default function DashboardScreen() {
                     />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-text-primary font-bold text-[15px]" numberOfLines={1}>{item.productName}</Text>
-                    <Text className="text-text-muted text-xs mt-1">
+                    <Text className="text-text-primary dark:text-text-primary-dark font-bold text-[15px]" numberOfLines={1}>{item.productName}</Text>
+                    <Text className="text-text-muted dark:text-text-muted text-xs mt-1">
                       {new Date(item.date).toLocaleDateString()} · {item.performedBy}
                     </Text>
                   </View>
@@ -217,12 +223,12 @@ export default function DashboardScreen() {
       {/* Stock Flow Chart */}
       <View className="mb-10">
         <View className="flex-row justify-between items-center mb-2">
-          <Text className="text-text-primary text-xl font-[800]">Stock Flow</Text>
-          <Text className="text-text-muted font-bold text-xs uppercase">Last 7 days</Text>
+          <Text className="text-text-primary dark:text-text-primary-dark text-xl font-[800]">Stock Flow</Text>
+          <Text className="text-text-muted dark:text-text-muted font-bold text-xs uppercase">Last 7 days</Text>
         </View>
-        <Text className="text-success font-bold text-sm mb-4">+18% Rise in Total Inventory Units</Text>
+        <Text className="text-success dark:text-success font-bold text-sm mb-4">+18% Rise in Total Inventory Units</Text>
         
-        <Card className="p-0 overflow-hidden items-center">
+        <Card className="p-0 overflow-hidden items-center dark:bg-card-dark">
           <BarChart
             data={chartData}
             width={width - 40}
@@ -230,12 +236,12 @@ export default function DashboardScreen() {
             yAxisLabel=""
             yAxisSuffix=""
             chartConfig={{
-              backgroundColor: '#FFFFFF',
-              backgroundGradientFrom: '#FFFFFF',
-              backgroundGradientTo: '#FFFFFF',
+              backgroundColor: isDark ? '#1F2937' : '#FFFFFF',
+              backgroundGradientFrom: isDark ? '#1F2937' : '#FFFFFF',
+              backgroundGradientTo: isDark ? '#1F2937' : '#FFFFFF',
               decimalPlaces: 0,
               color: (opacity = 1) => `rgba(167, 139, 250, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
+              labelColor: (opacity = 1) => isDark ? `rgba(156, 163, 175, ${opacity})` : `rgba(107, 114, 128, ${opacity})`,
               style: {
                 borderRadius: 16,
               },

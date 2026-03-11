@@ -50,11 +50,12 @@ export default function AddProductScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 1,
+      quality: 0.7,
+      base64: true,
     });
 
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
+    if (!result.canceled && result.assets[0].base64) {
+      setImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
     }
   };
 
@@ -64,16 +65,16 @@ export default function AddProductScreen() {
   }
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-white" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView className="flex-1 bg-background dark:bg-background-dark" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Custom Header */}
-      <View className="px-5 pt-14 pb-4 flex-row justify-between items-center bg-white border-b border-border">
+      <View className="px-5 pt-14 pb-4 flex-row justify-between items-center bg-white dark:bg-card-dark border-b border-border dark:border-border-dark">
         <TouchableOpacity 
           onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-background items-center justify-center"
+          className="w-10 h-10 rounded-full bg-background dark:bg-background-dark items-center justify-center"
         >
-          <Ionicons name="arrow-back" size={20} color="#111111" />
+          <Ionicons name="arrow-back" size={20} color="#A78BFA" />
         </TouchableOpacity>
-        <Text className="text-text-primary text-[17px] font-[700]">Add Product</Text>
+        <Text className="text-text-primary dark:text-text-primary-dark text-[17px] font-[700]">Add Product</Text>
         <View className="w-10" />
       </View>
 
@@ -87,11 +88,11 @@ export default function AddProductScreen() {
             </TouchableOpacity>
           ) : (
             <>
-              <View className="w-16 h-16 rounded-full bg-primary-light items-center justify-center mb-4">
+              <View className="w-16 h-16 rounded-full bg-primary-light dark:bg-primary/20 items-center justify-center mb-4">
                 <Ionicons name="image-outline" size={32} color="#A78BFA" />
               </View>
-              <Text className="text-text-primary font-bold text-lg">Upload Product Image</Text>
-              <Text className="text-text-muted text-sm mt-1 mb-4">Tap to choose from library</Text>
+              <Text className="text-text-primary dark:text-text-primary-dark font-bold text-lg">Upload Product Image</Text>
+              <Text className="text-text-muted dark:text-text-muted text-sm mt-1 mb-4">Tap to choose from library</Text>
               <Button 
                 title="Choose File" 
                 variant="primary" 
@@ -105,8 +106,8 @@ export default function AddProductScreen() {
         </Card>
 
         {serverError ? (
-          <View className="bg-danger-light p-4 rounded-xl mb-4">
-            <Text className="text-danger text-sm font-medium">{serverError}</Text>
+          <View className="bg-danger-light dark:bg-danger-dark/20 p-4 rounded-xl mb-4">
+            <Text className="text-danger dark:text-danger text-sm font-medium">{serverError}</Text>
           </View>
         ) : null}
 
@@ -129,31 +130,31 @@ export default function AddProductScreen() {
 
         {/* Quantity row */}
         <View className="mb-4">
-          <Text className="text-[13px] font-semibold text-text-primary mb-1.5">Initial Stock</Text>
+          <Text className="text-[13px] font-semibold text-text-primary dark:text-text-primary-dark mb-1.5">Initial Stock</Text>
           <View className="flex-row items-center justify-between">
-            <View className="w-24 h-12 bg-white border border-border rounded-[12px] items-center justify-center">
+            <View className="w-24 h-12 bg-background dark:bg-card-dark border border-border dark:border-border-dark rounded-[12px] items-center justify-center">
               <Controller control={control} name="quantityInStock" render={({ field: { value } }) => (
-                <Text className="text-text-primary font-bold text-lg">{value}</Text>
+                <Text className="text-text-primary dark:text-text-primary-dark font-bold text-lg">{value}</Text>
               )} />
             </View>
             <View className="flex-row gap-2">
               <TouchableOpacity 
                 onPress={() => adjustStock(1)}
-                className="bg-success-light px-4 py-2 rounded-full flex-row items-center"
+                className="bg-success-light dark:bg-success-dark/20 px-4 py-2 rounded-full flex-row items-center"
               >
                 <Ionicons name="add" size={16} color="#22C55E" />
                 <Text className="text-success font-bold ml-1">Add Stock</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 onPress={() => adjustStock(-1)}
-                className="bg-danger-light px-4 py-2 rounded-full flex-row items-center"
+                className="bg-danger-light dark:bg-danger-dark/20 px-4 py-2 rounded-full flex-row items-center"
               >
                 <Ionicons name="remove" size={16} color="#EF4444" />
                 <Text className="text-danger font-bold ml-1">Remove Stock</Text>
               </TouchableOpacity>
             </View>
           </View>
-          {errors.quantityInStock?.message && <Text className="text-sm text-danger mt-1 font-medium">{errors.quantityInStock.message}</Text>}
+          {errors.quantityInStock?.message && <Text className="text-sm text-danger dark:text-danger mt-1 font-medium">{errors.quantityInStock.message}</Text>}
         </View>
 
         <Controller control={control} name="supplierName" render={({ field: { onChange, value, onBlur } }) => (
@@ -169,7 +170,7 @@ export default function AddProductScreen() {
             onChangeText={onChange} 
             onBlur={onBlur} 
             error={errors.price?.message}
-            leftIcon={<Text className="text-text-muted font-bold">$</Text>}
+            leftIcon={<Text className="text-text-muted dark:text-text-muted font-bold">₹</Text>}
           />
         )} />
 

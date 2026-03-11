@@ -8,7 +8,7 @@ interface CardProps extends ViewProps {
 export function Card({ children, className, style, ...props }: CardProps) {
   return (
     <View 
-      className={`bg-card rounded-[16px] p-4 ${className || ''}`} 
+      className={`bg-card dark:bg-card-dark rounded-[16px] p-4 ${className || ''}`} 
       style={[styles.card, style]}
       {...props}
     >

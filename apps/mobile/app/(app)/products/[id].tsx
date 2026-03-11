@@ -73,9 +73,9 @@ export default function ProductDetailScreen() {
 
   if (isLoading) return <LoadingSpinner />
   if (error || !product) return (
-    <View className="flex-1 items-center justify-center p-6 bg-background">
+    <View className="flex-1 items-center justify-center p-6 bg-background dark:bg-background-dark">
       <Ionicons name="alert-circle-outline" size={48} color="#EF4444" />
-      <Text className="text-danger font-medium text-center mt-3">{error ?? 'Product not found'}</Text>
+      <Text className="text-danger dark:text-danger-dark font-medium text-center mt-3">{error ?? 'Product not found'}</Text>
       <Button title="Go Back" onPress={() => router.back()} className="mt-4" />
     </View>
   )
@@ -84,7 +84,7 @@ export default function ProductDetailScreen() {
   const stockColor = product.quantityInStock === 0 ? '#EF4444' : product.quantityInStock < 10 ? '#F59E0B' : '#22C55E';
 
   return (
-    <View className="flex-1 bg-background">
+    <View className="flex-1 bg-background dark:bg-background-dark">
       {/* Header Overlay */}
       <View className="absolute top-14 left-5 z-10">
         <TouchableOpacity 
@@ -97,7 +97,7 @@ export default function ProductDetailScreen() {
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Product Image */}
-        <View className="w-full h-[220px] bg-primary-light items-center justify-center rounded-b-[24px] overflow-hidden">
+        <View className="w-full h-[220px] bg-primary-light dark:bg-primary/10 items-center justify-center rounded-b-[24px] overflow-hidden">
           {product.imageUrl ? (
             <Image source={{ uri: product.imageUrl }} className="w-full h-full" />
           ) : (
@@ -108,28 +108,28 @@ export default function ProductDetailScreen() {
         <View className="px-5 mt-6">
           <View className="flex-row justify-between items-start">
             <View className="flex-1 mr-4">
-              <Text className="text-text-primary text-[24px] font-[800] leading-8">{product.name}</Text>
+              <Text className="text-text-primary dark:text-text-primary-dark text-[24px] font-[800] leading-8">{product.name}</Text>
               <View className="flex-row items-center mt-2">
                 <Badge label={`SKU: ${product.sku}`} variant="default" className="mr-2" />
                 <Badge label={product.category} variant="info" />
               </View>
             </View>
-            <Text className="text-primary text-[22px] font-[700]">${Number(product.price).toFixed(2)}</Text>
+            <Text className="text-primary dark:text-primary text-[22px] font-[700]">₹{Number(product.price).toFixed(2)}</Text>
           </View>
 
           {/* Stock Indicator */}
           <View className="mt-8 mb-6">
             <View className="flex-row justify-between items-center mb-2">
-              <Text className="text-text-primary font-bold">Stock Availability</Text>
-              <Text className="text-text-primary font-bold">{product.quantityInStock} Units</Text>
+              <Text className="text-text-primary dark:text-text-primary-dark font-bold">Stock Availability</Text>
+              <Text className="text-text-primary dark:text-text-primary-dark font-bold">{product.quantityInStock} Units</Text>
             </View>
-            <View className="h-2 w-full bg-border rounded-full overflow-hidden">
+            <View className="h-2 w-full bg-border dark:bg-border-dark rounded-full overflow-hidden">
               <View 
                 className="h-full rounded-full" 
                 style={{ width: `${stockPercentage}%`, backgroundColor: stockColor }} 
               />
             </View>
-            <Text className="text-text-muted text-xs mt-2 font-medium">
+            <Text className="text-text-muted dark:text-text-muted text-xs mt-2 font-medium">
               {product.quantityInStock === 0 ? 'Out of stock' : product.quantityInStock < 10 ? 'Low stock alert' : 'Healthy stock level'}
             </Text>
           </View>
@@ -141,8 +141,8 @@ export default function ProductDetailScreen() {
             <DetailRow label="Created Date" value={new Date(product.createdAt).toLocaleDateString()} />
             {product.description && (
               <View className="p-4">
-                <Text className="text-text-muted text-[13px] font-semibold mb-1">Description</Text>
-                <Text className="text-text-primary text-[15px] leading-5">{product.description}</Text>
+                <Text className="text-text-muted dark:text-text-muted text-[13px] font-semibold mb-1">Description</Text>
+                <Text className="text-text-primary dark:text-text-primary-dark text-[15px] leading-5">{product.description}</Text>
               </View>
             )}
           </Card>
@@ -151,14 +151,14 @@ export default function ProductDetailScreen() {
           <View className="flex-row gap-3 mb-3">
             <TouchableOpacity 
               onPress={() => openAdjust('IN')}
-              className="flex-1 bg-success-light h-[52px] rounded-[14px] items-center justify-center flex-row"
+              className="flex-1 bg-success-light dark:bg-success-dark/20 h-[52px] rounded-[14px] items-center justify-center flex-row"
             >
               <Ionicons name="arrow-up" size={18} color="#22C55E" />
               <Text className="text-success font-bold ml-2">Stock IN</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               onPress={() => openAdjust('OUT')}
-              className="flex-1 bg-danger-light h-[52px] rounded-[14px] items-center justify-center flex-row"
+              className="flex-1 bg-danger-light dark:bg-danger-dark/20 h-[52px] rounded-[14px] items-center justify-center flex-row"
             >
               <Ionicons name="arrow-down" size={18} color="#EF4444" />
               <Text className="text-danger font-bold ml-2">Stock OUT</Text>
@@ -178,9 +178,7 @@ export default function ProductDetailScreen() {
               className="flex-1" 
               style={{ borderColor: '#EF4444' }}
               onPress={handleDelete} 
-            >
-              <Text className="text-danger font-bold">Delete</Text>
-            </Button>
+            />
           </View>
         </View>
       </ScrollView>
@@ -188,22 +186,22 @@ export default function ProductDetailScreen() {
       {/* Adjustment Modal */}
       <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
         <TouchableOpacity 
-          className="flex-1 bg-black/40 justify-end" 
+          className="flex-1 bg-black/40 dark:bg-black/60 justify-end" 
           activeOpacity={1} 
           onPress={() => setModalVisible(false)}
         >
-          <TouchableOpacity activeOpacity={1} className="bg-white rounded-t-[24px] p-6 pb-10">
-            <View className="w-12 h-1 bg-border self-center rounded-full mb-6" />
-            <Text className="text-text-primary text-[20px] font-[800] mb-6">
+          <TouchableOpacity activeOpacity={1} className="bg-white dark:bg-card-dark rounded-t-[24px] p-6 pb-10">
+            <View className="w-12 h-1 bg-border dark:bg-border-dark self-center rounded-full mb-6" />
+            <Text className="text-text-primary dark:text-text-primary-dark text-[20px] font-[800] mb-6">
               {adjustType === 'IN' ? 'Restock Product' : 'Stock Outflow'}
             </Text>
             
-            <View className="bg-background rounded-[16px] p-6 mb-8 items-center border border-border">
-              <Text className="text-text-muted text-xs font-bold uppercase tracking-widest mb-2">Quantity to Adjust</Text>
+            <View className="bg-background dark:bg-background-dark rounded-[16px] p-6 mb-8 items-center border border-border dark:border-border-dark">
+              <Text className="text-text-muted dark:text-text-muted text-xs font-bold uppercase tracking-widest mb-2">Quantity to Adjust</Text>
               <TextInput
-                className="text-[40px] font-[800] text-text-primary w-full text-center"
+                className="text-[40px] font-[800] text-text-primary dark:text-text-primary-dark w-full text-center"
                 placeholder="0"
-                placeholderTextColor="#D1D5DB"
+                placeholderTextColor="#6B7280"
                 keyboardType="number-pad"
                 value={quantity}
                 onChangeText={setQuantity}
@@ -234,9 +232,9 @@ export default function ProductDetailScreen() {
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <View className="flex-row justify-between items-center p-4 border-b border-border">
-      <Text className="text-text-muted text-[13px] font-semibold">{label}</Text>
-      <Text className="text-text-primary text-[15px] font-bold">{value}</Text>
+    <View className="flex-row justify-between items-center p-4 border-b border-border dark:border-border-dark">
+      <Text className="text-text-muted dark:text-text-muted text-[13px] font-semibold">{label}</Text>
+      <Text className="text-text-primary dark:text-text-primary-dark text-[15px] font-bold">{value}</Text>
     </View>
   )
 }

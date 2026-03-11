@@ -28,19 +28,19 @@ export function Button({
   };
 
   const variantClasses = {
-    primary: "bg-primary active:bg-primary-dark",
-    secondary: "bg-primary-light active:bg-violet-200",
-    danger: "bg-danger active:bg-red-600",
-    outlined: "bg-transparent border border-primary active:bg-primary-light",
-    ghost: "bg-transparent active:bg-primary-light"
+    primary: "bg-primary active:bg-primary-dark dark:bg-primary dark:active:bg-primary-dark",
+    secondary: "bg-primary-light dark:bg-primary-dark/20 active:bg-violet-200 dark:active:bg-primary-dark/30",
+    danger: "bg-danger dark:bg-danger-dark active:bg-red-600 dark:active:bg-red-700",
+    outlined: "bg-transparent border border-primary dark:border-primary active:bg-primary-light dark:active:bg-primary-dark/10",
+    ghost: "bg-transparent active:bg-primary-light dark:active:bg-primary-dark/10"
   };
 
   const textVariantClasses = {
     primary: "text-white",
-    secondary: "text-primary-dark",
+    secondary: "text-primary-dark dark:text-primary",
     danger: "text-white",
-    outlined: "text-primary",
-    ghost: "text-primary"
+    outlined: "text-primary dark:text-primary",
+    ghost: "text-primary dark:text-primary"
   };
 
   const disabledClasses = (disabled || loading) ? "opacity-50" : "";
