@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import {
   Alert,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   ScrollView,
   Text,
   TextInput,
@@ -185,46 +187,52 @@ export default function ProductDetailScreen() {
 
       {/* Adjustment Modal */}
       <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
-        <TouchableOpacity 
-          className="flex-1 bg-black/40 dark:bg-black/60 justify-end" 
-          activeOpacity={1} 
-          onPress={() => setModalVisible(false)}
+        <KeyboardAvoidingView
+          className="flex-1"
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
         >
-          <TouchableOpacity activeOpacity={1} className="bg-white dark:bg-card-dark rounded-t-[24px] p-6 pb-10">
-            <View className="w-12 h-1 bg-border dark:bg-border-dark self-center rounded-full mb-6" />
-            <Text className="text-text-primary dark:text-text-primary-dark text-[20px] font-[800] mb-6">
-              {adjustType === 'IN' ? 'Restock Product' : 'Stock Outflow'}
-            </Text>
-            
-            <View className="bg-background dark:bg-background-dark rounded-[16px] p-6 mb-8 items-center border border-border dark:border-border-dark">
-              <Text className="text-text-muted dark:text-text-muted text-xs font-bold uppercase tracking-widest mb-2">Quantity to Adjust</Text>
-              <TextInput
-                className="text-[40px] font-[800] text-text-primary dark:text-text-primary-dark w-full text-center"
-                placeholder="0"
-                placeholderTextColor="#6B7280"
-                keyboardType="number-pad"
-                value={quantity}
-                onChangeText={setQuantity}
-                autoFocus
-              />
-            </View>
+          <TouchableOpacity 
+            className="flex-1 bg-black/40 dark:bg-black/60 justify-end" 
+            activeOpacity={1} 
+            onPress={() => setModalVisible(false)}
+          >
+            <TouchableOpacity activeOpacity={1} className="bg-white dark:bg-card-dark rounded-t-[24px] p-6 pb-10">
+              <View className="w-12 h-1 bg-border dark:bg-border-dark self-center rounded-full mb-6" />
+              <Text className="text-text-primary dark:text-text-primary-dark text-[20px] font-[800] mb-6">
+                {adjustType === 'IN' ? 'Restock Product' : 'Stock Outflow'}
+              </Text>
+              
+              <View className="bg-background dark:bg-background-dark rounded-[16px] p-6 mb-8 items-center border border-border dark:border-border-dark">
+                <Text className="text-text-muted dark:text-text-muted text-xs font-bold uppercase tracking-widest mb-2">Quantity to Adjust</Text>
+                <TextInput
+                  className="text-[40px] font-[800] text-text-primary dark:text-text-primary-dark w-full text-center"
+                  placeholder="0"
+                  placeholderTextColor="#6B7280"
+                  keyboardType="number-pad"
+                  value={quantity}
+                  onChangeText={setQuantity}
+                  autoFocus
+                />
+              </View>
 
-            <View className="flex-row gap-3">
-              <Button 
-                title="Cancel" 
-                variant="secondary" 
-                className="flex-1" 
-                onPress={() => setModalVisible(false)} 
-              />
-              <Button 
-                title="Confirm" 
-                loading={adjusting} 
-                className="flex-1" 
-                onPress={handleAdjust} 
-              />
-            </View>
+              <View className="flex-row gap-3">
+                <Button 
+                  title="Cancel" 
+                  variant="secondary" 
+                  className="flex-1" 
+                  onPress={() => setModalVisible(false)} 
+                />
+                <Button 
+                  title="Confirm" 
+                  loading={adjusting} 
+                  className="flex-1" 
+                  onPress={handleAdjust} 
+                />
+              </View>
+            </TouchableOpacity>
           </TouchableOpacity>
-        </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   )

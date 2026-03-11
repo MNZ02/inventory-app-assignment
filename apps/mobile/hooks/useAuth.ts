@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { api } from '../lib/api'
+import { apiClient } from '../lib/api'
 import { saveToken, getToken, removeToken } from '../lib/storage'
 import type { User } from '@inventory/types'
 
@@ -48,6 +49,24 @@ export function useAuthProvider(): AuthState {
       }
       setIsLoading(false)
     })
+  }, [])
+
+  useEffect(() => {
+    const interceptorId = apiClient.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const status = error?.response?.status
+        if (status === 401) {
+          await removeToken()
+          setUser(null)
+        }
+        return Promise.reject(error)
+      }
+    )
+
+    return () => {
+      apiClient.interceptors.response.eject(interceptorId)
+    }
   }, [])
 
   const login = useCallback(async (email: string, password: string) => {

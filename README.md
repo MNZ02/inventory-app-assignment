@@ -69,16 +69,22 @@ The API runs at `http://localhost:3000`. Open the Expo app with Expo Go or a dev
 
 ---
 
-## Completed Updates (March 11, 2026)
+## Completed Updates (March 12, 2026)
 
-- **Expo startup scripts stabilized**: mobile scripts now support `dev`, `dev:lan`, `dev:localhost`, and `dev:tunnel`.
-- **Root route fixed**: added `app/index.tsx` redirect so Expo Go does not land on unmatched route when opening `/`.
-- **Bottom tabs implemented**: authenticated app now uses `Dashboard`, `Products`, and `Activity` tabs.
-- **Products list access clarified**: added products are visible from the **Products** tab.
-- **Ngrok dependency path made optional**: tunnel mode is explicit (`pnpm dev:tunnel`) instead of default.
-- **Worklets/Reanimated mismatch fixed for Expo SDK 54**: pinned `react-native-worklets` to `0.5.1` to match Expo Go native runtime and avoid `[WorkletsError]` crashes.
-- **Tab shell sign-out added**: visible logout action is now available in tab headers.
-- **Recommended restart flow documented in support**: restart Metro with `--clear`, fully close Expo Go, then rescan QR.
+- **Expo Router v6 mobile shell**: authenticated tabs now include `Dashboard`, `Products`, and `Activity`.
+- **System dark mode + manual theme toggle**: app follows device appearance and supports light/dark/system switching.
+- **Image upload pipeline upgraded**: mobile uploads product images to Cloudinary using signed params; API stores HTTPS `imageUrl` only.
+- **Base64 image migration support**: script added to migrate legacy `data:image/...` rows to hosted URLs.
+- **Dashboard metrics expanded**:
+  - `totalStockValue` (real `price * quantityInStock` aggregate)
+  - stock flow as **net** movement (`IN - OUT`) for last 7 UTC days
+  - safe zero-data handling (no BarChart crash path)
+- **Products insights improved**: per-product dynamic trend badge (percent/units) and category filter UI.
+- **Auth hardening**: mobile now clears token/user on API 401 and redirects to login via auth guard.
+- **Inventory UX refinements**:
+  - stock adjust modal is keyboard-aware on iOS/Android
+  - after editing a product, user is redirected to Products tab
+- **Repo hygiene updates**: `.expo/cache/**` ignored and tracked cache artifacts removed.
 
 ---
 
@@ -116,7 +122,13 @@ All responses follow the shape: `{ data, message?, error? }`
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| GET | `/dashboard` | Yes | Returns `{ totalProducts, totalStockQuantity, lowStockItems, recentTransactions }` |
+| GET | `/dashboard` | Yes | Returns `{ totalProducts, totalStockQuantity, totalStockValue, lowStockItems, recentTransactions, stockFlow, stockFlowHasTransactions, stockFlowNetTotal }` |
+
+### Upload
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/upload/sign` | Yes | Returns signed Cloudinary upload params for mobile image upload |
 
 ### Health
 
@@ -168,5 +180,7 @@ inventory-app/
 - **JWT** signed with HS256 via `jose`, expires in 7 days. Payload: `{ sub, email, role }`
 - **Stock transactions** run in a DB transaction — an OUT that would bring stock below 0 is rejected with HTTP 400
 - **Low stock** threshold is `quantityInStock < 10`
-- **Mobile** uses `expo-secure-store` for JWT persistence; requires Expo Dev Client for full native support
+- **Mobile** uses `expo-secure-store` for JWT persistence and auto-logs out on API 401
+- **Product images** are URL-only (`https://...`) and uploaded via Cloudinary signed flow (no base64 payload storage)
+- **Dashboard stock flow** uses UTC day buckets and net units (`IN - OUT`)
 - **Shared types** in `packages/types` are consumed as raw TypeScript source via path aliases — no build step needed

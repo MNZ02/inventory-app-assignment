@@ -66,7 +66,7 @@ export default function EditProductScreen() {
 
       await updateProduct(id, payload)
       Alert.alert('Success', 'Product updated successfully')
-      router.back()
+      router.replace('/(app)/(tabs)/products')
     } catch (err: any) {
       setServerError(err?.response?.data?.error ?? err.message ?? 'Failed to update product')
     }
