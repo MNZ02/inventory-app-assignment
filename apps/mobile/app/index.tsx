@@ -13,5 +13,5 @@ export default function IndexRoute() {
     )
   }
 
-  return <Redirect href={isAuthenticated ? '/(app)/dashboard' : '/(auth)/login'} />
+  return <Redirect href={isAuthenticated ? '/(app)/(tabs)/dashboard' : '/(auth)/login'} />
 }
