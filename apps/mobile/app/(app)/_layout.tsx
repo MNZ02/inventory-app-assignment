@@ -20,7 +20,12 @@ export default function AppLayout() {
         headerTintColor: '#fff',
         headerTitleStyle: { fontFamily: 'Inter_700Bold', fontSize: 18 },
         headerRight: () => (
-          <TouchableOpacity onPress={handleLogout} style={{ marginRight: 15 }}>
+          <TouchableOpacity 
+            onPress={handleLogout} 
+            style={{ marginRight: 15 }}
+            accessibilityLabel="Logout"
+            accessibilityRole="button"
+          >
             <Ionicons name="log-out-outline" size={24} color="white" />
           </TouchableOpacity>
         ),

@@ -3,12 +3,12 @@ import { FlatList, ScrollView, StyleSheet, Text, View, RefreshControl, Touchable
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { api } from '../../lib/api'
-import { Card } from '../../components/ui/Card'
-import { Badge } from '../../components/ui/Badge'
-import { LoadingSpinner } from '../../components/ui/LoadingSpinner'
-import { Button } from '../../components/ui/Button'
-import { useAuth } from '../../hooks/useAuth'
+import { api } from '../../../lib/api'
+import { Card } from '../../../components/ui/Card'
+import { Badge } from '../../../components/ui/Badge'
+import { LoadingSpinner } from '../../../components/ui/LoadingSpinner'
+import { Button } from '../../../components/ui/Button'
+import { useAuth } from '../../../hooks/useAuth'
 import type { Product, Transaction } from '@inventory/types'
 
 interface DashboardData {
@@ -24,11 +24,15 @@ export default function DashboardScreen() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
+    setError(null)
     try {
       const res = await api.get<DashboardData>('/dashboard')
       setData(res.data ?? null)
+    } catch (err: any) {
+      setError(err?.response?.data?.error ?? err.message ?? 'Failed to load dashboard data')
     } finally {
       setIsLoading(false)
       setIsRefreshing(false)
@@ -59,6 +63,16 @@ export default function DashboardScreen() {
   })
 
   if (isLoading) return <LoadingSpinner />
+
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Ionicons name="alert-circle-outline" size={48} color="#ef4444" />
+        <Text style={styles.errorText}>{error}</Text>
+        <Button title="Retry" onPress={fetchData} style={{ marginTop: 16 }} />
+      </View>
+    )
+  }
 
   const lowStockCount = data?.lowStockItems.length ?? 0
   const hasLowStock = lowStockCount > 0
@@ -183,6 +197,8 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
   content: { padding: 16 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: '#f9fafb' },
+  errorText: { color: '#dc2626', fontFamily: 'Inter_500Medium', fontSize: 16, textAlign: 'center', marginTop: 12 },
   header: { marginBottom: 28 },
   greeting: { fontSize: 28, fontFamily: 'Inter_700Bold', color: '#111827', letterSpacing: -0.5 },
   date: { fontSize: 15, fontFamily: 'Inter_400Regular', color: '#6b7280', marginTop: 4 },

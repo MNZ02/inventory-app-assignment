@@ -24,6 +24,8 @@ export const BackButton = ({ color = 'white', onPress }: BackButtonProps) => {
       onPress={handlePress} 
       style={styles.container}
       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      accessibilityLabel="Back"
+      accessibilityRole="button"
     >
       <Ionicons 
         name={Platform.OS === 'ios' ? 'chevron-back' : 'arrow-back'} 

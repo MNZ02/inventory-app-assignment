@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native'
-import { Stack } from 'expo-router'
-import { api } from '../../../lib/api'
-import { Card } from '../../../components/ui/Card'
-import { Badge } from '../../../components/ui/Badge'
-import { LoadingSpinner } from '../../../components/ui/LoadingSpinner'
-import { BackButton } from '../../../components/ui/BackButton'
+import { api } from '../../../../lib/api'
+import { Card } from '../../../../components/ui/Card'
+import { Badge } from '../../../../components/ui/Badge'
+import { LoadingSpinner } from '../../../../components/ui/LoadingSpinner'
 import type { Transaction } from '@inventory/types'
 
 type TransactionRow = Transaction & { date: string }

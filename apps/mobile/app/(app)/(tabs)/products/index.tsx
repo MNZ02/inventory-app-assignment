@@ -10,9 +10,9 @@ import {
 } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { useRouter } from 'expo-router'
-import { useProducts } from '../../../hooks/useProducts'
-import { Card } from '../../../components/ui/Card'
-import { LoadingSpinner } from '../../../components/ui/LoadingSpinner'
+import { useProducts } from '../../../../hooks/useProducts'
+import { Card } from '../../../../components/ui/Card'
+import { LoadingSpinner } from '../../../../components/ui/LoadingSpinner'
 import type { Product } from '@inventory/types'
 
 const SORT_OPTIONS = [
