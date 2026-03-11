@@ -3,21 +3,24 @@ import {
   Alert,
   Modal,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  Image,
+  Dimensions,
 } from 'react-native'
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useProduct } from '../../../hooks/useProducts'
 import { api } from '../../../lib/api'
 import { Card } from '../../../components/ui/Card'
 import { Button } from '../../../components/ui/Button'
 import { Badge } from '../../../components/ui/Badge'
 import { LoadingSpinner } from '../../../components/ui/LoadingSpinner'
-import { BackButton } from '../../../components/ui/BackButton'
+import { Ionicons } from '@expo/vector-icons'
 import type { Transaction } from '@inventory/types'
+
+const { width } = Dimensions.get('window');
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -69,110 +72,171 @@ export default function ProductDetailScreen() {
   }
 
   if (isLoading) return <LoadingSpinner />
-  if (error || !product) return <View style={styles.center}><Text style={styles.errorText}>{error ?? 'Product not found'}</Text></View>
+  if (error || !product) return (
+    <View className="flex-1 items-center justify-center p-6 bg-background">
+      <Ionicons name="alert-circle-outline" size={48} color="#EF4444" />
+      <Text className="text-danger font-medium text-center mt-3">{error ?? 'Product not found'}</Text>
+      <Button title="Go Back" onPress={() => router.back()} className="mt-4" />
+    </View>
+  )
 
-  const isLowStock = product.quantityInStock < 10
+  const stockPercentage = Math.min(100, (product.quantityInStock / 50) * 100);
+  const stockColor = product.quantityInStock === 0 ? '#EF4444' : product.quantityInStock < 10 ? '#F59E0B' : '#22C55E';
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Stack.Screen 
-        options={{ 
-          title: 'Product Details',
-          headerLeft: () => <BackButton />,
-          headerRight: () => null 
-        }} 
-      />
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.name}>{product.name}</Text>
-          <Text style={styles.sku}>SKU: {product.sku}</Text>
+    <View className="flex-1 bg-background">
+      {/* Header Overlay */}
+      <View className="absolute top-14 left-5 z-10">
+        <TouchableOpacity 
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-black/20 items-center justify-center"
+        >
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
+        {/* Product Image */}
+        <View className="w-full h-[220px] bg-primary-light items-center justify-center rounded-b-[24px] overflow-hidden">
+          {product.imageUrl ? (
+            <Image source={{ uri: product.imageUrl }} className="w-full h-full" />
+          ) : (
+            <Ionicons name="cube-outline" size={80} color="#A78BFA" />
+          )}
         </View>
-        <Badge label={product.category} variant="info" />
-      </View>
 
-      <Card style={styles.stockCard}>
-        <Text style={styles.stockLabel}>Current Stock</Text>
-        <Text style={[styles.stockValue, isLowStock ? styles.stockLow : styles.stockOk]}>
-          {product.quantityInStock} units
-        </Text>
-        {isLowStock && <Text style={styles.lowStockWarning}>⚠ Low stock</Text>}
-      </Card>
+        <View className="px-5 mt-6">
+          <View className="flex-row justify-between items-start">
+            <View className="flex-1 mr-4">
+              <Text className="text-text-primary text-[24px] font-[800] leading-8">{product.name}</Text>
+              <View className="flex-row items-center mt-2">
+                <Badge label={`SKU: ${product.sku}`} variant="default" className="mr-2" />
+                <Badge label={product.category} variant="info" />
+              </View>
+            </View>
+            <Text className="text-primary text-[22px] font-[700]">${Number(product.price).toFixed(2)}</Text>
+          </View>
 
-      <Card style={styles.detailCard}>
-        <Row label="Price" value={`$${Number(product.price).toFixed(2)}`} />
-        <Row label="Supplier" value={product.supplierName} />
-        {product.description ? <Row label="Description" value={product.description} /> : null}
-        <Row label="Created" value={new Date(product.createdAt).toLocaleDateString()} />
-      </Card>
+          {/* Stock Indicator */}
+          <View className="mt-8 mb-6">
+            <View className="flex-row justify-between items-center mb-2">
+              <Text className="text-text-primary font-bold">Stock Availability</Text>
+              <Text className="text-text-primary font-bold">{product.quantityInStock} Units</Text>
+            </View>
+            <View className="h-2 w-full bg-border rounded-full overflow-hidden">
+              <View 
+                className="h-full rounded-full" 
+                style={{ width: `${stockPercentage}%`, backgroundColor: stockColor }} 
+              />
+            </View>
+            <Text className="text-text-muted text-xs mt-2 font-medium">
+              {product.quantityInStock === 0 ? 'Out of stock' : product.quantityInStock < 10 ? 'Low stock alert' : 'Healthy stock level'}
+            </Text>
+          </View>
 
-      <View style={styles.actionRow}>
-        <Button title="Stock In" variant="primary" style={styles.actionBtn} onPress={() => openAdjust('IN')} />
-        <Button title="Stock Out" variant="danger" style={styles.actionBtn} onPress={() => openAdjust('OUT')} />
-      </View>
+          {/* Details Card */}
+          <Card className="mb-6 p-0 overflow-hidden">
+            <DetailRow label="Category" value={product.category} />
+            <DetailRow label="Supplier" value={product.supplierName} />
+            <DetailRow label="Created Date" value={new Date(product.createdAt).toLocaleDateString()} />
+            {product.description && (
+              <View className="p-4">
+                <Text className="text-text-muted text-[13px] font-semibold mb-1">Description</Text>
+                <Text className="text-text-primary text-[15px] leading-5">{product.description}</Text>
+              </View>
+            )}
+          </Card>
 
-      <View style={styles.actionRow}>
-        <Button title="Edit" variant="secondary" style={styles.actionBtn} onPress={() => router.push(`/(app)/products/edit/${id}`)} />
-        <Button title="Delete" variant="danger" style={styles.actionBtn} onPress={handleDelete} />
-      </View>
+          {/* Action Buttons */}
+          <View className="flex-row gap-3 mb-3">
+            <TouchableOpacity 
+              onPress={() => openAdjust('IN')}
+              className="flex-1 bg-success-light h-[52px] rounded-[14px] items-center justify-center flex-row"
+            >
+              <Ionicons name="arrow-up" size={18} color="#22C55E" />
+              <Text className="text-success font-bold ml-2">Stock IN</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={() => openAdjust('OUT')}
+              className="flex-1 bg-danger-light h-[52px] rounded-[14px] items-center justify-center flex-row"
+            >
+              <Ionicons name="arrow-down" size={18} color="#EF4444" />
+              <Text className="text-danger font-bold ml-2">Stock OUT</Text>
+            </TouchableOpacity>
+          </View>
 
-      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setModalVisible(false)}>
-          <TouchableOpacity activeOpacity={1} style={styles.modalSheet}>
-            <Text style={styles.modalTitle}>{adjustType === 'IN' ? 'Add Stock' : 'Remove Stock'}</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Enter quantity"
-              placeholderTextColor="#9ca3af"
-              keyboardType="number-pad"
-              value={quantity}
-              onChangeText={setQuantity}
-              autoFocus
+          <View className="flex-row gap-3">
+            <Button 
+              title="Edit Product" 
+              variant="secondary" 
+              className="flex-1" 
+              onPress={() => router.push(`/(app)/products/edit/${id}`)} 
             />
-            <View style={styles.actionRow}>
-              <Button title="Cancel" variant="secondary" style={styles.actionBtn} onPress={() => setModalVisible(false)} />
-              <Button title="Confirm" loading={adjusting} style={styles.actionBtn} onPress={handleAdjust} />
+            <Button 
+              title="Delete" 
+              variant="outlined" 
+              className="flex-1" 
+              style={{ borderColor: '#EF4444' }}
+              onPress={handleDelete} 
+            >
+              <Text className="text-danger font-bold">Delete</Text>
+            </Button>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Adjustment Modal */}
+      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
+        <TouchableOpacity 
+          className="flex-1 bg-black/40 justify-end" 
+          activeOpacity={1} 
+          onPress={() => setModalVisible(false)}
+        >
+          <TouchableOpacity activeOpacity={1} className="bg-white rounded-t-[24px] p-6 pb-10">
+            <View className="w-12 h-1 bg-border self-center rounded-full mb-6" />
+            <Text className="text-text-primary text-[20px] font-[800] mb-6">
+              {adjustType === 'IN' ? 'Restock Product' : 'Stock Outflow'}
+            </Text>
+            
+            <View className="bg-background rounded-[16px] p-6 mb-8 items-center border border-border">
+              <Text className="text-text-muted text-xs font-bold uppercase tracking-widest mb-2">Quantity to Adjust</Text>
+              <TextInput
+                className="text-[40px] font-[800] text-text-primary w-full text-center"
+                placeholder="0"
+                placeholderTextColor="#D1D5DB"
+                keyboardType="number-pad"
+                value={quantity}
+                onChangeText={setQuantity}
+                autoFocus
+              />
+            </View>
+
+            <View className="flex-row gap-3">
+              <Button 
+                title="Cancel" 
+                variant="secondary" 
+                className="flex-1" 
+                onPress={() => setModalVisible(false)} 
+              />
+              <Button 
+                title="Confirm" 
+                loading={adjusting} 
+                className="flex-1" 
+                onPress={handleAdjust} 
+              />
             </View>
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
-    </ScrollView>
-  )
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={rowStyles.row}>
-      <Text style={rowStyles.label}>{label}</Text>
-      <Text style={rowStyles.value}>{value}</Text>
     </View>
   )
 }
 
-const rowStyles = StyleSheet.create({
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
-  label: { fontSize: 15, fontFamily: 'Inter_400Regular', color: '#6b7280' },
-  value: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: '#111827', flex: 1, textAlign: 'right' },
-})
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
-  content: { padding: 16, paddingBottom: 40 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  errorText: { color: '#dc2626', fontFamily: 'Inter_500Medium', fontSize: 16 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
-  name: { fontSize: 26, fontFamily: 'Inter_700Bold', color: '#111827', letterSpacing: -0.5 },
-  sku: { fontSize: 14, fontFamily: 'Inter_500Medium', color: '#6b7280', marginTop: 4 },
-  stockCard: { marginBottom: 16, alignItems: 'center', paddingVertical: 24, borderRadius: 20 },
-  stockLabel: { fontSize: 15, fontFamily: 'Inter_500Medium', color: '#6b7280' },
-  stockValue: { fontSize: 40, fontFamily: 'Inter_700Bold', marginTop: 8 },
-  stockOk: { color: '#16a34a' },
-  stockLow: { color: '#dc2626' },
-  lowStockWarning: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#ea580c', marginTop: 6 },
-  detailCard: { marginBottom: 20, borderRadius: 20, padding: 16 },
-  actionRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
-  actionBtn: { flex: 1 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalSheet: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },
-  modalTitle: { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#111827', marginBottom: 20 },
-  modalInput: { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 20, fontFamily: 'Inter_600SemiBold', color: '#111827', marginBottom: 20, textAlign: 'center' },
-})
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View className="flex-row justify-between items-center p-4 border-b border-border">
+      <Text className="text-text-muted text-[13px] font-semibold">{label}</Text>
+      <Text className="text-text-primary text-[15px] font-bold">{value}</Text>
+    </View>
+  )
+}

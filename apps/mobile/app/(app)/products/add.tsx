@@ -1,13 +1,15 @@
 import { useState } from 'react'
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { Stack, useRouter } from 'expo-router'
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, View, TouchableOpacity, Image } from 'react-native'
+import { useRouter } from 'expo-router'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useProducts } from '../../../hooks/useProducts'
 import { Button } from '../../../components/ui/Button'
 import { Input } from '../../../components/ui/Input'
-import { BackButton } from '../../../components/ui/BackButton'
+import { Card } from '../../../components/ui/Card'
+import { Ionicons } from '@expo/vector-icons'
+import * as ImagePicker from 'expo-image-picker'
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -24,16 +26,18 @@ export default function AddProductScreen() {
   const router = useRouter()
   const { createProduct } = useProducts()
   const [serverError, setServerError] = useState<string | null>(null)
+  const [image, setImage] = useState<string | null>(null)
 
-  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { control, handleSubmit, setValue, getValues, formState: { errors, isSubmitting, isValid } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { quantityInStock: 0 },
+    mode: 'onChange',
   })
 
   const onSubmit = async (data: FormData) => {
     setServerError(null)
     try {
-      await createProduct(data)
+      await createProduct({ ...data, imageUrl: image || undefined })
       Alert.alert('Success', 'Product created successfully')
       router.back()
     } catch (err: any) {
@@ -41,61 +45,156 @@ export default function AddProductScreen() {
     }
   }
 
-  return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Stack.Screen 
-        options={{ 
-          title: 'Add Product',
-          headerLeft: () => <BackButton />,
-          headerRight: () => null 
-        }} 
-      />
-      <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Add Product</Text>
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
 
-        {serverError ? <View style={styles.errorBox}><Text style={styles.errorText}>{serverError}</Text></View> : null}
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
+
+  const adjustStock = (amount: number) => {
+    const current = getValues('quantityInStock') || 0;
+    setValue('quantityInStock', Math.max(0, current + amount), { shouldValidate: true });
+  }
+
+  return (
+    <KeyboardAvoidingView className="flex-1 bg-white" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      {/* Custom Header */}
+      <View className="px-5 pt-14 pb-4 flex-row justify-between items-center bg-white border-b border-border">
+        <TouchableOpacity 
+          onPress={() => router.back()}
+          className="w-10 h-10 rounded-full bg-background items-center justify-center"
+        >
+          <Ionicons name="arrow-back" size={20} color="#111111" />
+        </TouchableOpacity>
+        <Text className="text-text-primary text-[17px] font-[700]">Add Product</Text>
+        <View className="w-10" />
+      </View>
+
+      <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 60 }} keyboardShouldPersistTaps="handled">
+        {/* Image Upload Section */}
+        <Card className="mb-6 items-center py-8">
+          {image ? (
+            <TouchableOpacity onPress={pickImage} className="items-center">
+              <Image source={{ uri: image }} className="w-24 h-24 rounded-[12px] mb-4" />
+              <Text className="text-primary font-bold">Change Image</Text>
+            </TouchableOpacity>
+          ) : (
+            <>
+              <View className="w-16 h-16 rounded-full bg-primary-light items-center justify-center mb-4">
+                <Ionicons name="image-outline" size={32} color="#A78BFA" />
+              </View>
+              <Text className="text-text-primary font-bold text-lg">Upload Product Image</Text>
+              <Text className="text-text-muted text-sm mt-1 mb-4">Tap to choose from library</Text>
+              <Button 
+                title="Choose File" 
+                variant="primary" 
+                size="sm" 
+                fullWidth={false}
+                onPress={pickImage}
+                className="px-6 rounded-full"
+              />
+            </>
+          )}
+        </Card>
+
+        {serverError ? (
+          <View className="bg-danger-light p-4 rounded-xl mb-4">
+            <Text className="text-danger text-sm font-medium">{serverError}</Text>
+          </View>
+        ) : null}
 
         <Controller control={control} name="name" render={({ field: { onChange, value, onBlur } }) => (
-          <Input label="Product Name" placeholder="e.g. Widget A" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.name?.message} />
+          <Input label="Product Name" placeholder="Enter product name" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.name?.message} />
         )} />
 
-        <Controller control={control} name="sku" render={({ field: { onChange, value, onBlur } }) => (
-          <Input label="SKU" placeholder="e.g. WGT-001" autoCapitalize="characters" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.sku?.message} />
-        )} />
+        <View className="flex-row gap-3">
+          <View className="flex-1">
+            <Controller control={control} name="category" render={({ field: { onChange, value, onBlur } }) => (
+              <Input label="Category" placeholder="e.g. Tools" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.category?.message} />
+            )} />
+          </View>
+          <View className="flex-1">
+            <Controller control={control} name="sku" render={({ field: { onChange, value, onBlur } }) => (
+              <Input label="SKU" placeholder="WGT-001" autoCapitalize="characters" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.sku?.message} />
+            )} />
+          </View>
+        </View>
 
-        <Controller control={control} name="category" render={({ field: { onChange, value, onBlur } }) => (
-          <Input label="Category" placeholder="e.g. Electronics" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.category?.message} />
+        {/* Quantity row */}
+        <View className="mb-4">
+          <Text className="text-[13px] font-semibold text-text-primary mb-1.5">Initial Stock</Text>
+          <View className="flex-row items-center justify-between">
+            <View className="w-24 h-12 bg-white border border-border rounded-[12px] items-center justify-center">
+              <Controller control={control} name="quantityInStock" render={({ field: { value } }) => (
+                <Text className="text-text-primary font-bold text-lg">{value}</Text>
+              )} />
+            </View>
+            <View className="flex-row gap-2">
+              <TouchableOpacity 
+                onPress={() => adjustStock(1)}
+                className="bg-success-light px-4 py-2 rounded-full flex-row items-center"
+              >
+                <Ionicons name="add" size={16} color="#22C55E" />
+                <Text className="text-success font-bold ml-1">Add Stock</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={() => adjustStock(-1)}
+                className="bg-danger-light px-4 py-2 rounded-full flex-row items-center"
+              >
+                <Ionicons name="remove" size={16} color="#EF4444" />
+                <Text className="text-danger font-bold ml-1">Remove Stock</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          {errors.quantityInStock?.message && <Text className="text-sm text-danger mt-1 font-medium">{errors.quantityInStock.message}</Text>}
+        </View>
+
+        <Controller control={control} name="supplierName" render={({ field: { onChange, value, onBlur } }) => (
+          <Input label="Supplier Name" placeholder="Enter supplier" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.supplierName?.message} />
         )} />
 
         <Controller control={control} name="price" render={({ field: { onChange, value, onBlur } }) => (
-          <Input label="Price ($)" placeholder="0.00" keyboardType="decimal-pad" value={value?.toString()} onChangeText={onChange} onBlur={onBlur} error={errors.price?.message} />
-        )} />
-
-        <Controller control={control} name="quantityInStock" render={({ field: { onChange, value, onBlur } }) => (
-          <Input label="Initial Stock" placeholder="0" keyboardType="number-pad" value={value?.toString()} onChangeText={onChange} onBlur={onBlur} error={errors.quantityInStock?.message} />
-        )} />
-
-        <Controller control={control} name="supplierName" render={({ field: { onChange, value, onBlur } }) => (
-          <Input label="Supplier" placeholder="Supplier name" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.supplierName?.message} />
+          <Input 
+            label="Selling Price" 
+            placeholder="0.00" 
+            keyboardType="decimal-pad" 
+            value={value?.toString()} 
+            onChangeText={onChange} 
+            onBlur={onBlur} 
+            error={errors.price?.message}
+            leftIcon={<Text className="text-text-muted font-bold">$</Text>}
+          />
         )} />
 
         <Controller control={control} name="description" render={({ field: { onChange, value, onBlur } }) => (
-          <Input label="Description (optional)" placeholder="Product description" multiline numberOfLines={3} value={value} onChangeText={onChange} onBlur={onBlur} error={errors.description?.message} />
+          <Input 
+            label="Description" 
+            placeholder="Product description" 
+            multiline 
+            className="h-20 text-start"
+            textAlignVertical="top"
+            value={value} 
+            onChangeText={onChange} 
+            onBlur={onBlur} 
+            error={errors.description?.message} 
+          />
         )} />
 
-        <Button title="Create Product" loading={isSubmitting} onPress={handleSubmit(onSubmit)} style={styles.button} />
-        <Button title="Cancel" variant="secondary" onPress={() => router.back()} style={styles.cancelButton} />
+        <Button 
+          title="Save Product" 
+          loading={isSubmitting} 
+          onPress={handleSubmit(onSubmit)} 
+          className="mt-4"
+          disabled={!isValid}
+        />
       </ScrollView>
     </KeyboardAvoidingView>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
-  content: { padding: 16, paddingBottom: 60 },
-  title: { fontSize: 28, fontFamily: 'Inter_700Bold', color: '#111827', marginBottom: 24, letterSpacing: -0.5 },
-  errorBox: { backgroundColor: '#fee2e2', borderRadius: 12, padding: 14, marginBottom: 20 },
-  errorText: { color: '#b91c1c', fontSize: 14, fontFamily: 'Inter_500Medium' },
-  button: { marginTop: 12 },
-  cancelButton: { marginTop: 14 },
-})
