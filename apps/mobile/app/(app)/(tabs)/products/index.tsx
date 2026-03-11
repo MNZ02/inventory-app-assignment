@@ -31,16 +31,43 @@ export default function ProductsScreen() {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [activeFilter, setActiveFilter] = useState('all')
+  const [activeCategory, setActiveCategory] = useState('all')
 
   const { products, isLoading, refetch } = useProducts({
     search: debouncedSearch || undefined,
   })
 
+  const categoryOptions = useMemo(() => {
+    const categories = new Set<string>()
+    products.forEach(p => {
+      const cat = p.category?.trim()
+      if (cat) categories.add(cat)
+    })
+    const sorted = Array.from(categories).sort((a, b) => a.localeCompare(b))
+    return ['all', ...sorted]
+  }, [products])
+
+  useEffect(() => {
+    if (activeCategory !== 'all' && !categoryOptions.includes(activeCategory)) {
+      setActiveCategory('all')
+    }
+  }, [categoryOptions, activeCategory])
+
   const filteredProducts = useMemo(() => {
-    if (activeFilter === 'out') return products.filter(p => p.quantityInStock === 0)
-    if (activeFilter === 'low') return products.filter(p => p.quantityInStock > 0 && p.quantityInStock < 10)
-    return products
-  }, [products, activeFilter])
+    let result = products
+
+    if (activeFilter === 'out') {
+      result = result.filter(p => p.quantityInStock === 0)
+    } else if (activeFilter === 'low') {
+      result = result.filter(p => p.quantityInStock > 0 && p.quantityInStock < 10)
+    }
+
+    if (activeCategory !== 'all') {
+      result = result.filter(p => p.category?.trim() === activeCategory)
+    }
+
+    return result
+  }, [products, activeFilter, activeCategory])
 
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -100,7 +127,7 @@ export default function ProductsScreen() {
               className={`mr-2 px-5 py-2.5 rounded-full ${
                 activeFilter === filter.value 
                   ? 'bg-primary' 
-                  : 'bg-background-dark dark:bg-card-dark border border-border dark:border-border-dark'
+                  : 'bg-card dark:bg-card-dark border border-border dark:border-border-dark'
               }`}
             >
               <Text className={`font-bold text-sm ${activeFilter === filter.value ? 'text-white' : 'text-text-secondary dark:text-text-muted'}`}>
@@ -111,9 +138,30 @@ export default function ProductsScreen() {
         </ScrollView>
       </View>
 
+      {/* Category Pills */}
+      <View className="mb-4">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
+          {categoryOptions.map((cat) => (
+            <TouchableOpacity 
+              key={cat}
+              onPress={() => setActiveCategory(cat)}
+              className={`mr-2 px-5 py-2.5 rounded-full ${
+                activeCategory === cat 
+                  ? 'bg-primary' 
+                  : 'bg-card dark:bg-card-dark border border-border dark:border-border-dark'
+              }`}
+            >
+              <Text className={`font-bold text-sm ${activeCategory === cat ? 'text-white' : 'text-text-secondary dark:text-text-muted'}`}>
+                {cat === 'all' ? 'All Categories' : cat}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
       {/* Search Bar */}
       <View className="px-5 mb-4">
-        <View className="flex-row items-center bg-background-dark dark:bg-card-dark rounded-[12px] px-4 py-3 border border-transparent dark:border-border-dark">
+        <View className="flex-row items-center bg-card dark:bg-card-dark rounded-[12px] px-4 py-3 border border-border dark:border-border-dark">
           <Ionicons name="search-outline" size={20} color="#9CA3AF" />
           <TextInput
             className="flex-1 ml-2 text-text-primary dark:text-text-primary-dark text-[15px] py-1"
