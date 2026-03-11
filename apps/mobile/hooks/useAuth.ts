@@ -65,8 +65,14 @@ export function useAuthProvider(): AuthState {
   }, [])
 
   const logout = useCallback(async () => {
-    await removeToken()
-    setUser(null)
+    try {
+      await api.post('/auth/logout', {})
+    } catch (e) {
+      console.error('Logout error on server', e)
+    } finally {
+      await removeToken()
+      setUser(null)
+    }
   }, [])
 
   return { user, isLoading, isAuthenticated: !!user, login, register, logout }

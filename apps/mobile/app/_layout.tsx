@@ -16,7 +16,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/(auth)/login')
     } else if (isAuthenticated && inAuthGroup) {
-      router.replace('/(app)/dashboard')
+      router.replace('/(app)/(tabs)/dashboard')
     }
   }, [isAuthenticated, isLoading, segments])
 

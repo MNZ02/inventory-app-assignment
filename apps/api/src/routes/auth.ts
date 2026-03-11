@@ -5,5 +5,6 @@ const auth = new Hono()
 
 auth.post('/register', authController.register)
 auth.post('/login', authController.login)
+auth.post('/logout', authController.logout)
 
 export default auth

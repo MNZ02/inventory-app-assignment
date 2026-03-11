@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native'
+import { Stack } from 'expo-router'
 import { api } from '../../../lib/api'
 import { Card } from '../../../components/ui/Card'
 import { Badge } from '../../../components/ui/Badge'
 import { LoadingSpinner } from '../../../components/ui/LoadingSpinner'
+import { BackButton } from '../../../components/ui/BackButton'
 import type { Transaction } from '@inventory/types'
 
 type TransactionRow = Transaction & { date: string }
@@ -57,16 +59,16 @@ export default function TransactionsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
-  content: { padding: 12 },
-  empty: { textAlign: 'center', color: '#6b7280', padding: 32 },
-  card: { padding: 12 },
+  content: { padding: 16, paddingBottom: 40 },
+  empty: { textAlign: 'center', color: '#6b7280', padding: 40, fontFamily: 'Inter_400Regular', fontSize: 16 },
+  card: { padding: 16, borderRadius: 20 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   info: { flex: 1 },
-  productName: { fontSize: 15, fontWeight: '600', color: '#111827' },
-  meta: { fontSize: 12, color: '#6b7280', marginTop: 2 },
-  date: { fontSize: 11, color: '#9ca3af', marginTop: 2 },
+  productName: { fontSize: 17, fontFamily: 'Inter_600SemiBold', color: '#111827', letterSpacing: -0.3 },
+  meta: { fontSize: 14, fontFamily: 'Inter_500Medium', color: '#6b7280', marginTop: 3 },
+  date: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#9ca3af', marginTop: 3 },
   right: { alignItems: 'flex-end', gap: 6 },
-  qty: { fontSize: 20, fontWeight: '700' },
+  qty: { fontSize: 22, fontFamily: 'Inter_700Bold' },
   qtyIn: { color: '#16a34a' },
   qtyOut: { color: '#dc2626' },
 })
