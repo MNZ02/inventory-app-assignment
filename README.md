@@ -144,7 +144,7 @@ inventory-app/
 │   │   ├── drizzle.config.ts
 │   │   └── .env.example
 │   │
-│   └── mobile/                  # Expo React Native app (Expo Router)
+│   └── mobile/                  # Expo React Native app (Expo Router v6)
 │       ├── app/
 │       │   ├── _layout.tsx      # Root layout + auth guard
 │       │   ├── (auth)/          # Login, Register screens

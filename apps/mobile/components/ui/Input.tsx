@@ -8,6 +8,7 @@ interface InputProps extends TextInputProps {
   rightIcon?: ReactNode
   className?: string
   containerStyle?: string
+  containerClassName?: string
 }
 
 export function Input({ 
@@ -17,6 +18,7 @@ export function Input({
   rightIcon, 
   className, 
   containerStyle, 
+  containerClassName,
   onFocus, 
   onBlur, 
   ...props 
@@ -29,7 +31,7 @@ export function Input({
       <View 
         className={`flex-row items-center bg-background dark:bg-card-dark rounded-[12px] px-4 min-h-[52px] border ${
           isFocused ? 'border-primary' : error ? 'border-danger dark:border-danger-dark' : 'border-transparent dark:border-border-dark'
-        }`}
+        } ${containerClassName || ''}`}
       >
         {leftIcon && <View className="mr-2">{leftIcon}</View>}
         <TextInput

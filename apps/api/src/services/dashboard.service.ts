@@ -14,6 +14,7 @@ const toProduct = (row: DbProduct): Product => ({
 interface DashboardStats {
   totalProducts: number
   totalStockQuantity: number
+  totalStockValue: number
   lowStockItems: Product[]
   recentTransactions: Transaction[]
   stockFlow: { date: string; units: number }[]
@@ -29,6 +30,12 @@ export const dashboardService = {
 
     const [{ totalStockQuantity }] = await db
       .select({ totalStockQuantity: sql<number>`coalesce(sum(quantity_in_stock), 0)::int` })
+      .from(products)
+
+    const [{ totalStockValue }] = await db
+      .select({
+        totalStockValue: sql<number>`coalesce(sum(${products.price} * ${products.quantityInStock}), 0)::double precision`,
+      })
       .from(products)
 
     const lowStockRows = await db
@@ -87,6 +94,7 @@ export const dashboardService = {
     return {
       totalProducts,
       totalStockQuantity,
+      totalStockValue,
       lowStockItems: lowStockRows.map(toProduct),
       recentTransactions: recentTransactionRows.map((row) => ({
         ...row,

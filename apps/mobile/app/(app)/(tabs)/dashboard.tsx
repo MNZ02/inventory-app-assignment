@@ -20,6 +20,7 @@ const { width } = Dimensions.get('window');
 interface DashboardData {
   totalProducts: number
   totalStockQuantity: number
+  totalStockValue: number
   lowStockItems: Product[]
   recentTransactions: (Transaction & { date: string })[]
   stockFlow: { date: string; units: number }[]
@@ -69,7 +70,14 @@ export default function DashboardScreen() {
   }
 
   const getInitials = (name: string = '') => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    return name
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((segment) => segment.charAt(0) || '')
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
   }
 
   if (isLoading) return <LoadingSpinner />
@@ -153,7 +161,7 @@ export default function DashboardScreen() {
             <Ionicons name="wallet-outline" size={18} color="#FFFFFF" />
           </View>
           <Text className="text-white/70 text-[10px] absolute top-4 right-4 font-bold">Weekly ↓</Text>
-          <Text className="text-white text-[28px] font-[800] leading-8">₹{(data?.totalStockQuantity || 0) * 125}</Text>
+          <Text className="text-white text-[28px] font-[800] leading-8">₹{(data?.totalStockValue ?? 0).toFixed(2)}</Text>
           <Text className="text-white/80 text-[13px] font-[400] mt-1">Total Stock Value</Text>
         </Card>
 
