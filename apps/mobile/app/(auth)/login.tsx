@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { KeyboardAvoidingView, Platform, ScrollView, Text, View, TouchableOpacity, Dimensions } from 'react-native'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import { Link } from 'expo-router'
 import { useForm, Controller } from 'react-hook-form'
@@ -8,6 +8,9 @@ import { z } from 'zod'
 import { useAuth } from '../../hooks/useAuth'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
+import { Ionicons } from '@expo/vector-icons'
+
+const { height } = Dimensions.get('window');
 
 const schema = z.object({
   email: z.string().email('Invalid email address'),
@@ -18,6 +21,7 @@ type FormData = z.infer<typeof schema>
 export default function LoginScreen() {
   const { login } = useAuth()
   const [serverError, setServerError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
   })
@@ -32,22 +36,35 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Animated.View entering={FadeInUp.duration(500).springify()}>
-          <Animated.Text entering={FadeInDown.delay(100).duration(400)} style={styles.title}>Sign In</Animated.Text>
-          <Animated.Text entering={FadeInDown.delay(150).duration(400)} style={styles.subtitle}>Welcome back to Inventory</Animated.Text>
+    <KeyboardAvoidingView className="flex-1 bg-white dark:bg-background-dark" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+        <View style={{ height: height * 0.55 }} className="px-5 justify-center">
+          <Animated.View entering={FadeInUp.duration(600).springify()}>
+            <Text className="text-[52px] font-[900] text-text-primary dark:text-text-primary-dark leading-[52px]">PRECISION</Text>
+            <Text className="text-[52px] font-[900] text-primary leading-[52px]">INVENTORY</Text>
+            <Text className="text-[52px] font-[900] text-text-primary dark:text-text-primary-dark leading-[52px]">FOR GROWING</Text>
+            <Text className="text-[52px] font-[900] text-text-primary dark:text-text-primary-dark leading-[52px]">BUSINESSES</Text>
+            
+            <Text className="text-text-secondary dark:text-text-muted mt-4 text-[15px] font-[400] leading-6">
+              Built to simplify complex workflows and give you complete visibility into your inventory.
+            </Text>
+          </Animated.View>
+        </View>
 
-          {serverError ? <View style={styles.errorBox}><Text style={styles.errorText}>{serverError}</Text></View> : null}
+        <View className="px-5 pb-10">
+          {serverError ? (
+            <Animated.View entering={FadeInDown} className="bg-danger-light dark:bg-danger-dark/20 p-4 rounded-xl mb-4">
+              <Text className="text-danger dark:text-danger text-sm font-medium">{serverError}</Text>
+            </Animated.View>
+          ) : null}
 
-          <Animated.View entering={FadeInDown.delay(200).duration(400)}>
+          <Animated.View entering={FadeInDown.delay(100)}>
             <Controller
               control={control}
               name="email"
               render={({ field: { onChange, value, onBlur } }) => (
                 <Input
-                  label="Email"
-                  placeholder="you@example.com"
+                  placeholder="Email Address"
                   autoCapitalize="none"
                   keyboardType="email-address"
                   value={value}
@@ -59,46 +76,49 @@ export default function LoginScreen() {
             />
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(280).duration(400)}>
+          <Animated.View entering={FadeInDown.delay(200)}>
             <Controller
               control={control}
               name="password"
               render={({ field: { onChange, value, onBlur } }) => (
                 <Input
-                  label="Password"
-                  placeholder="Your password"
-                  secureTextEntry
+                  placeholder="Password"
+                  secureTextEntry={!showPassword}
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
                   error={errors.password?.message}
+                  rightIcon={
+                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                      <Ionicons 
+                        name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                        size={20} 
+                        color="#6B7280" 
+                      />
+                    </TouchableOpacity>
+                  }
                 />
               )}
             />
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(360).duration(400)}>
-            <Button title="Sign In" loading={isSubmitting} onPress={handleSubmit(onSubmit)} style={styles.button} />
+          <Animated.View entering={FadeInDown.delay(300)}>
+            <Button 
+              title="Explore Inventory" 
+              loading={isSubmitting} 
+              onPress={handleSubmit(onSubmit)} 
+              className="mt-2"
+            />
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(420).duration(400)} style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
-            <Link href="/(auth)/register"><Text style={styles.link}>Register</Text></Link>
+          <Animated.View entering={FadeInDown.delay(400)} className="flex-row justify-center mt-6">
+            <Text className="text-text-secondary dark:text-text-muted font-[400] text-base">Don&apos;t have an account? </Text>
+            <Link href="/(auth)/register">
+              <Text className="text-primary font-bold text-base">Register</Text>
+            </Link>
           </Animated.View>
-        </Animated.View>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 24, justifyContent: 'center', backgroundColor: '#f9fafb' },
-  title: { fontSize: 32, fontFamily: 'Inter_700Bold', color: '#111827', marginBottom: 8, letterSpacing: -1 },
-  subtitle: { fontSize: 17, fontFamily: 'Inter_400Regular', color: '#6b7280', marginBottom: 36 },
-  errorBox: { backgroundColor: '#fee2e2', borderRadius: 12, padding: 14, marginBottom: 20 },
-  errorText: { color: '#b91c1c', fontSize: 14, fontFamily: 'Inter_500Medium' },
-  button: { marginTop: 12 },
-  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 28 },
-  footerText: { color: '#6b7280', fontFamily: 'Inter_400Regular', fontSize: 15 },
-  link: { color: '#2563eb', fontFamily: 'Inter_600SemiBold', fontSize: 15 },
-})

@@ -33,28 +33,21 @@ export function useProducts(options: UseProductsOptions = {}) {
     }
   }, [options.search, options.category, options.sortBy, options.order])
 
-  useEffect(() => {
-    fetchProducts()
-  }, [fetchProducts])
-
   const createProduct = useCallback(async (input: CreateProductInput) => {
     const res = await api.post<Product>('/products', input)
     if (!res.data) throw new Error(res.error ?? 'Failed to create product')
-    await fetchProducts()
     return res.data
-  }, [fetchProducts])
+  }, [])
 
   const updateProduct = useCallback(async (id: string, input: UpdateProductInput) => {
     const res = await api.put<Product>(`/products/${id}`, input)
     if (!res.data) throw new Error(res.error ?? 'Failed to update product')
-    await fetchProducts()
     return res.data
-  }, [fetchProducts])
+  }, [])
 
   const deleteProduct = useCallback(async (id: string) => {
     await api.delete(`/products/${id}`)
-    await fetchProducts()
-  }, [fetchProducts])
+  }, [])
 
   return { products, isLoading, error, refetch: fetchProducts, createProduct, updateProduct, deleteProduct }
 }

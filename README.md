@@ -73,8 +73,11 @@ The API runs at `http://localhost:3000`. Open the Expo app with Expo Go or a dev
 
 - **Expo startup scripts stabilized**: mobile scripts now support `dev`, `dev:lan`, `dev:localhost`, and `dev:tunnel`.
 - **Root route fixed**: added `app/index.tsx` redirect so Expo Go does not land on unmatched route when opening `/`.
+- **Bottom tabs implemented**: authenticated app now uses `Dashboard`, `Products`, and `Activity` tabs.
+- **Products list access clarified**: added products are visible from the **Products** tab.
 - **Ngrok dependency path made optional**: tunnel mode is explicit (`pnpm dev:tunnel`) instead of default.
 - **Worklets/Reanimated mismatch fixed for Expo SDK 54**: pinned `react-native-worklets` to `0.5.1` to match Expo Go native runtime and avoid `[WorkletsError]` crashes.
+- **Tab shell sign-out added**: visible logout action is now available in tab headers.
 - **Recommended restart flow documented in support**: restart Metro with `--clear`, fully close Expo Go, then rescan QR.
 
 ---
@@ -141,11 +144,13 @@ inventory-app/
 │   │   ├── drizzle.config.ts
 │   │   └── .env.example
 │   │
-│   └── mobile/                  # Expo React Native app (Expo Router v3)
+│   └── mobile/                  # Expo React Native app (Expo Router v6)
 │       ├── app/
 │       │   ├── _layout.tsx      # Root layout + auth guard
 │       │   ├── (auth)/          # Login, Register screens
-│       │   └── (app)/           # Dashboard, Products, Transactions screens
+│       │   └── (app)/           # Authenticated shell
+│       │       ├── (tabs)/      # Dashboard, Products, Activity tabs
+│       │       └── products/    # Add/Edit/Detail stack screens
 │       ├── components/ui/       # Button, Input, Card, Badge, LoadingSpinner
 │       ├── hooks/               # useAuth, useProducts
 │       ├── lib/                 # axios API client, expo-secure-store helpers

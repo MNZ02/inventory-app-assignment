@@ -1,9 +1,14 @@
-import { useEffect, useState } from 'react'
-import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native'
+import { useEffect, useState, useCallback } from 'react'
+import { FlatList, RefreshControl, Text, View } from 'react-native'
+import Animated, { FadeInDown } from 'react-native-reanimated'
+import { useFocusEffect } from 'expo-router'
 import { api } from '../../../../lib/api'
 import { Card } from '../../../../components/ui/Card'
 import { Badge } from '../../../../components/ui/Badge'
 import { LoadingSpinner } from '../../../../components/ui/LoadingSpinner'
+import { Ionicons } from '@expo/vector-icons'
+import { DarkModeToggle } from '../../../../components/ui/DarkModeToggle'
+import { LogoutButton } from '../../../../components/ui/LogoutButton'
 import type { Transaction } from '@inventory/types'
 
 type TransactionRow = Transaction & { date: string }
@@ -12,61 +17,78 @@ export default function TransactionsScreen() {
   const [transactions, setTransactions] = useState<TransactionRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  const fetchTransactions = () => {
+  const fetchTransactions = useCallback(() => {
     setIsLoading(true)
     api.get<TransactionRow[]>('/transactions')
       .then((res) => setTransactions(res.data ?? []))
       .finally(() => setIsLoading(false))
-  }
-
-  useEffect(() => {
-    fetchTransactions()
   }, [])
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchTransactions()
+    }, [fetchTransactions])
+  )
 
   if (isLoading && transactions.length === 0) return <LoadingSpinner />
 
   return (
-    <FlatList
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      data={transactions}
-      keyExtractor={(item) => item.id}
-      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={fetchTransactions} />}
-      ListEmptyComponent={<Text style={styles.empty}>No transactions found</Text>}
-      renderItem={({ item }) => (
-        <Card style={styles.card}>
-          <View style={styles.row}>
-            <View style={styles.info}>
-              <Text style={styles.productName}>{item.productName}</Text>
-              <Text style={styles.meta}>By {item.performedBy}</Text>
-              <Text style={styles.date}>{new Date(item.date).toLocaleString()}</Text>
-            </View>
-            <View style={styles.right}>
-              <Badge label={item.type} variant={item.type === 'IN' ? 'success' : 'danger'} />
-              <Text style={[styles.qty, item.type === 'IN' ? styles.qtyIn : styles.qtyOut]}>
-                {item.type === 'IN' ? '+' : '-'}{item.quantityChange}
-              </Text>
-            </View>
+    <View className="flex-1 bg-background dark:bg-background-dark">
+      {/* Header */}
+      <View className="px-5 pt-14 pb-4 flex-row justify-between items-center">
+        <Text className="text-text-primary dark:text-text-primary-dark text-[28px] font-[900]">Activity</Text>
+        <View className="flex-row items-center">
+          <DarkModeToggle />
+          <LogoutButton />
+        </View>
+      </View>
+
+      <FlatList
+        data={transactions}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={fetchTransactions} tintColor="#A78BFA" />}
+        ListEmptyComponent={
+          <View className="items-center py-20">
+            <Ionicons name="receipt-outline" size={64} color="#D1D5DB" />
+            <Text className="text-text-primary dark:text-text-primary-dark font-bold text-lg mt-4 text-center">No transactions yet</Text>
+            <Text className="text-text-muted dark:text-text-muted text-sm mt-1 text-center font-medium">Stock movements will appear here</Text>
           </View>
-        </Card>
-      )}
-      ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-    />
+        }
+        renderItem={({ item, index }) => (
+          <Animated.View entering={FadeInDown.delay(Math.min(index, 10) * 50).duration(400)}>
+            <Card className="mb-3 p-3">
+              <View className="flex-row items-center">
+                <View className={`w-12 h-12 rounded-full items-center justify-center mr-4 ${item.type === 'IN' ? 'bg-success-light dark:bg-success-dark/20' : 'bg-danger-light dark:bg-danger-dark/20'}`}>
+                  <Ionicons 
+                    name={item.type === 'IN' ? "arrow-up" : "arrow-down"} 
+                    size={24} 
+                    color={item.type === 'IN' ? "#22C55E" : "#EF4444"} 
+                  />
+                </View>
+                
+                <View className="flex-1">
+                  <Text className="text-text-primary dark:text-text-primary-dark font-bold text-[16px]" numberOfLines={1}>{item.productName}</Text>
+                  <Text className="text-text-muted dark:text-text-muted text-xs mt-1 font-medium">
+                    {new Date(item.date).toLocaleDateString()} · By {item.performedBy}
+                  </Text>
+                </View>
+
+                <View className="items-end">
+                  <Text className={`font-[800] text-[18px] ${item.type === 'IN' ? 'text-success' : 'text-danger'}`}>
+                    {item.type === 'IN' ? '+' : '-'}{item.quantityChange}
+                  </Text>
+                  <Badge 
+                    label={item.type} 
+                    variant={item.type === 'IN' ? 'success' : 'danger'} 
+                    className="mt-1"
+                  />
+                </View>
+              </View>
+            </Card>
+          </Animated.View>
+        )}
+      />
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
-  content: { padding: 16, paddingBottom: 40 },
-  empty: { textAlign: 'center', color: '#6b7280', padding: 40, fontFamily: 'Inter_400Regular', fontSize: 16 },
-  card: { padding: 16, borderRadius: 20 },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  info: { flex: 1 },
-  productName: { fontSize: 17, fontFamily: 'Inter_600SemiBold', color: '#111827', letterSpacing: -0.3 },
-  meta: { fontSize: 14, fontFamily: 'Inter_500Medium', color: '#6b7280', marginTop: 3 },
-  date: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#9ca3af', marginTop: 3 },
-  right: { alignItems: 'flex-end', gap: 6 },
-  qty: { fontSize: 22, fontFamily: 'Inter_700Bold' },
-  qtyIn: { color: '#16a34a' },
-  qtyOut: { color: '#dc2626' },
-})

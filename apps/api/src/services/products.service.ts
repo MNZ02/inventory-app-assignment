@@ -1,6 +1,6 @@
-import { eq, ilike, and, asc, desc, or } from 'drizzle-orm'
+import { eq, ilike, and, asc, desc, or, sql } from 'drizzle-orm'
 import { db } from '../db'
-import { products, type Product as DbProduct } from '../db/schema'
+import { products, transactions, type Product as DbProduct } from '../db/schema'
 import type { CreateProductInput, UpdateProductInput, Product } from '@inventory/types'
 
 export interface GetProductsParams {
@@ -10,11 +10,13 @@ export interface GetProductsParams {
   order?: string
 }
 
-const toProduct = (row: DbProduct): Product => ({
+const toProduct = (row: DbProduct, trend?: { kind: 'percent' | 'units'; value: number } | null): Product => ({
   ...row,
-  description: row.description || undefined,
+  imageUrl: row.imageUrl ?? undefined,
+  description: row.description ?? undefined,
   price: Number(row.price),
   createdAt: row.createdAt.toISOString(),
+  trend: trend ?? undefined,
 })
 
 const escapeLike = (str: string) => str.replace(/[\\%_]/g, (match) => `\\${match}`)
@@ -45,12 +47,36 @@ export const productsService = {
           : products.createdAt
 
     const rows = await db
-      .select()
+      .select({
+        product: products,
+        currentNet: sql<number>`COALESCE(SUM(CASE WHEN ${transactions.createdAt} >= NOW() - INTERVAL '7 days' AND ${transactions.type} = 'IN' THEN ${transactions.quantityChange} WHEN ${transactions.createdAt} >= NOW() - INTERVAL '7 days' AND ${transactions.type} = 'OUT' THEN -${transactions.quantityChange} ELSE 0 END), 0)::int`,
+        previousNet: sql<number>`COALESCE(SUM(CASE WHEN ${transactions.createdAt} >= NOW() - INTERVAL '14 days' AND ${transactions.createdAt} < NOW() - INTERVAL '7 days' AND ${transactions.type} = 'IN' THEN ${transactions.quantityChange} WHEN ${transactions.createdAt} >= NOW() - INTERVAL '14 days' AND ${transactions.createdAt} < NOW() - INTERVAL '7 days' AND ${transactions.type} = 'OUT' THEN -${transactions.quantityChange} ELSE 0 END), 0)::int`,
+      })
       .from(products)
+      .leftJoin(transactions, eq(products.id, transactions.productId))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .groupBy(products.id)
       .orderBy(orderDir(orderCol))
 
-    return rows.map(toProduct)
+    return rows.map(({ product, currentNet, previousNet }) => {
+      let trend: { kind: 'percent' | 'units'; value: number } | null = null
+
+      if (currentNet === 0 && previousNet === 0) {
+        trend = null
+      } else if (previousNet !== 0) {
+        trend = {
+          kind: 'percent',
+          value: Math.round(((currentNet - previousNet) / Math.abs(previousNet)) * 100),
+        }
+      } else if (previousNet === 0 && currentNet !== 0) {
+        trend = {
+          kind: 'units',
+          value: currentNet,
+        }
+      }
+
+      return toProduct(product, trend)
+    })
   },
 
   async findById(id: string): Promise<Product | null> {

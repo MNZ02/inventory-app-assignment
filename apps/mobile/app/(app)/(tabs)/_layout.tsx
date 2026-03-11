@@ -1,32 +1,37 @@
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { useColorScheme } from 'nativewind'
 
 export default function TabsLayout() {
+  const { colorScheme } = useColorScheme()
+  const isDark = colorScheme === 'dark'
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#2563eb',
-        tabBarInactiveTintColor: '#64748b',
+        tabBarActiveTintColor: '#A78BFA',
+        tabBarInactiveTintColor: isDark ? '#6B7280' : '#9CA3AF',
         tabBarStyle: {
           borderTopWidth: 1,
-          borderTopColor: '#f1f5f9',
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
+          borderTopColor: isDark ? '#374151' : '#E5E7EB',
+          height: 70,
+          paddingBottom: 10,
+          paddingTop: 10,
+          backgroundColor: isDark ? '#1F2937' : '#FFFFFF',
         },
         tabBarLabelStyle: {
-          fontFamily: 'Inter_500Medium',
-          fontSize: 12,
+          fontSize: 11,
+          fontWeight: '600',
         },
-        headerShown: false, // Handled by parent or individual screens
+        headerShown: false,
       }}
     >
       <Tabs.Screen
         name="dashboard"
         options={{
           title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? "home" : "home-outline"} size={size} color={color} />
           ),
         }}
       />
@@ -34,8 +39,8 @@ export default function TabsLayout() {
         name="products/index"
         options={{
           title: 'Products',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="cube-outline" size={size} color={color} />
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? "cube" : "cube-outline"} size={size} color={color} />
           ),
         }}
       />
@@ -43,8 +48,8 @@ export default function TabsLayout() {
         name="transactions/index"
         options={{
           title: 'Activity',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="list-outline" size={size} color={color} />
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? "bar-chart" : "bar-chart-outline"} size={size} color={color} />
           ),
         }}
       />

@@ -29,6 +29,7 @@ export const products = pgTable('products', {
   price: numeric('price', { precision: 12, scale: 2 }).notNull(),
   quantityInStock: integer('quantity_in_stock').notNull().default(0),
   supplierName: text('supplier_name').notNull(),
+  imageUrl: text('image_url'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
