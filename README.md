@@ -18,7 +18,8 @@ Track products, manage stock levels, and record stock transactions (IN/OUT) with
 | Bun | ≥ 1.0 |
 | pnpm | ≥ 9.0 |
 | PostgreSQL | ≥ 14 |
-| Expo CLI | latest (`npm i -g expo-cli`) |
+| Expo CLI | latest (`npx expo --version`) |
+| Cloudinary account | Free tier works |
 
 ---
 
@@ -37,7 +38,12 @@ pnpm install
 ```bash
 # API
 cp apps/api/.env.example apps/api/.env
-# Edit apps/api/.env with your PostgreSQL credentials and a strong JWT_SECRET
+# Edit apps/api/.env with:
+# - DATABASE_URL
+# - JWT_SECRET
+# - CLOUDINARY_CLOUD_NAME
+# - CLOUDINARY_API_KEY
+# - CLOUDINARY_API_SECRET
 
 # Mobile
 cp apps/mobile/.env.example apps/mobile/.env
@@ -234,10 +240,48 @@ Permission behavior:
 4. Barcode field is filled from scanner output.
 5. SKU is auto-filled only if SKU is currently empty.
 
-### Supported Formats (v1)
+### Currently Supported Barcode Types (v1)
 
 - EAN-13
 - EAN-8
 - UPC-A
 - UPC-E
 - Code-128
+
+---
+
+## Troubleshooting
+
+### Database connection intermittently fails (`ETIMEDOUT` / `ECONNREFUSED` on `:5432`)
+
+Symptoms:
+
+- API logs show connection timeout/refused errors for PostgreSQL host IPs.
+- Some requests return `500`, later requests may return `200`.
+
+Checks:
+
+1. Confirm `apps/api/.env` has the correct `DATABASE_URL`.
+2. Ensure your DB firewall/security group allows your current client IP on port `5432`.
+3. If your provider uses IP allowlists, add your current IP.
+4. If DB is private-only, connect via VPN/bastion/tunnel.
+5. Restart API after fixing network access.
+
+### `column "barcode" does not exist`
+
+Cause:
+
+- API code expects latest schema but DB migration has not been applied.
+
+Fix:
+
+```bash
+pnpm --filter @inventory/api db:migrate
+```
+
+### Camera permission button appears not to work
+
+Expected behavior:
+
+- If permission can be requested again, scanner shows **Grant Permission**.
+- If permission is permanently blocked, scanner shows **Open Settings** and permission must be enabled manually in device settings.
