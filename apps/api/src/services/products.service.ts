@@ -14,6 +14,7 @@ const toProduct = (row: DbProduct, trend?: { kind: 'percent' | 'units'; value: n
   ...row,
   imageUrl: row.imageUrl ?? undefined,
   description: row.description ?? undefined,
+  barcode: row.barcode,
   price: Number(row.price),
   createdAt: row.createdAt.toISOString(),
   trend: trend ?? undefined,
@@ -30,6 +31,7 @@ export const productsService = {
         or(
           ilike(products.name, `%${escaped}%`),
           ilike(products.sku, `%${escaped}%`),
+          ilike(products.barcode, `%${escaped}%`),
           ilike(products.supplierName, `%${escaped}%`),
         ),
       )
@@ -81,6 +83,11 @@ export const productsService = {
 
   async findById(id: string): Promise<Product | null> {
     const [product] = await db.select().from(products).where(eq(products.id, id)).limit(1)
+    return product ? toProduct(product) : null
+  },
+
+  async findByBarcode(barcode: string): Promise<Product | null> {
+    const [product] = await db.select().from(products).where(eq(products.barcode, barcode)).limit(1)
     return product ? toProduct(product) : null
   },
 

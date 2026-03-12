@@ -12,9 +12,11 @@ import {
   Image,
   Dimensions,
 } from 'react-native'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
+import { useCallback } from 'react'
 import { useProduct } from '../../../hooks/useProducts'
 import { api } from '../../../lib/api'
+import { formatDate } from '../../../lib/formatters'
 import { Card } from '../../../components/ui/Card'
 import { Button } from '../../../components/ui/Button'
 import { Badge } from '../../../components/ui/Badge'
@@ -32,6 +34,13 @@ export default function ProductDetailScreen() {
   const [adjustType, setAdjustType] = useState<'IN' | 'OUT'>('IN')
   const [quantity, setQuantity] = useState('')
   const [adjusting, setAdjusting] = useState(false)
+  const [imageError, setImageError] = useState(false)
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch()
+    }, [refetch]),
+  )
 
   const handleDelete = () => {
     Alert.alert('Delete Product', 'Are you sure you want to delete this product?', [
@@ -87,21 +96,25 @@ export default function ProductDetailScreen() {
 
   return (
     <View className="flex-1 bg-background dark:bg-background-dark">
-      {/* Header Overlay */}
-      <View className="absolute top-14 left-5 z-10">
+      {/* Header Bar */}
+      <View className="pt-14 pb-4 px-5 flex-row items-center bg-background dark:bg-background-dark z-10">
         <TouchableOpacity 
           onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-black/20 items-center justify-center"
+          className="w-10 h-10 rounded-full bg-card dark:bg-card-dark items-center justify-center border border-border dark:border-border-dark"
         >
-          <Ionicons name="arrow-back" size={24} color="white" />
+          <Ionicons name="arrow-back" size={20} color="#111111" className="dark:text-white" />
         </TouchableOpacity>
       </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Product Image */}
         <View className="w-full h-[220px] bg-primary-light dark:bg-primary/10 items-center justify-center rounded-b-[24px] overflow-hidden">
-          {product.imageUrl ? (
-            <Image source={{ uri: product.imageUrl }} className="w-full h-full" />
+          {product.imageUrl && !imageError ? (
+            <Image 
+              source={{ uri: product.imageUrl }} 
+              className="w-full h-full" 
+              onError={() => setImageError(true)}
+            />
           ) : (
             <Ionicons name="cube-outline" size={80} color="#A78BFA" />
           )}
@@ -140,7 +153,7 @@ export default function ProductDetailScreen() {
           <Card className="mb-6 p-0 overflow-hidden">
             <DetailRow label="Category" value={product.category} />
             <DetailRow label="Supplier" value={product.supplierName} />
-            <DetailRow label="Created Date" value={new Date(product.createdAt).toLocaleDateString()} />
+            <DetailRow label="Created Date" value={formatDate(product.createdAt)} />
             {product.description && (
               <View className="p-4">
                 <Text className="text-text-muted dark:text-text-muted text-[13px] font-semibold mb-1">Description</Text>
@@ -176,9 +189,8 @@ export default function ProductDetailScreen() {
             />
             <Button 
               title="Delete" 
-              variant="outlined" 
+              variant="outlined-danger" 
               className="flex-1" 
-              style={{ borderColor: '#EF4444' }}
               onPress={handleDelete} 
             />
           </View>
@@ -193,33 +205,35 @@ export default function ProductDetailScreen() {
           keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
         >
           <TouchableOpacity 
-            className="flex-1 bg-black/40 dark:bg-black/60 justify-end" 
+            className="flex-1 bg-black/50 justify-end" 
             activeOpacity={1} 
             onPress={() => setModalVisible(false)}
           >
             <TouchableOpacity activeOpacity={1} className="bg-white dark:bg-card-dark rounded-t-[24px] p-6 pb-10">
               <View className="w-12 h-1 bg-border dark:bg-border-dark self-center rounded-full mb-6" />
               <Text className="text-text-primary dark:text-text-primary-dark text-[20px] font-[800] mb-6">
-                {adjustType === 'IN' ? 'Restock Product' : 'Stock Outflow'}
+                {adjustType === 'IN' ? 'Stock IN — Add Units' : 'Stock OUT — Remove Units'}
               </Text>
               
-              <View className="bg-background dark:bg-background-dark rounded-[16px] p-6 mb-8 items-center border border-border dark:border-border-dark">
-                <Text className="text-text-muted dark:text-text-muted text-xs font-bold uppercase tracking-widest mb-2">Quantity to Adjust</Text>
-                <TextInput
-                  className="text-[40px] font-[800] text-text-primary dark:text-text-primary-dark w-full text-center"
-                  placeholder="0"
-                  placeholderTextColor="#6B7280"
-                  keyboardType="number-pad"
-                  value={quantity}
-                  onChangeText={setQuantity}
-                  autoFocus
-                />
+              <View className="mb-8">
+                <Text className="text-[13px] font-semibold text-text-primary dark:text-text-primary-dark mb-2">Quantity to Adjust</Text>
+                <View className="bg-background dark:bg-background-dark rounded-[16px] p-6 items-center border border-border dark:border-border-dark">
+                  <TextInput
+                    className="text-[40px] font-[800] text-text-primary dark:text-text-primary-dark w-full text-center"
+                    placeholder="0"
+                    placeholderTextColor="#6B7280"
+                    keyboardType="number-pad"
+                    value={quantity}
+                    onChangeText={setQuantity}
+                    autoFocus
+                  />
+                </View>
               </View>
 
               <View className="flex-row gap-3">
                 <Button 
                   title="Cancel" 
-                  variant="secondary" 
+                  variant="ghost-primary" 
                   className="flex-1" 
                   onPress={() => setModalVisible(false)} 
                 />
@@ -240,7 +254,7 @@ export default function ProductDetailScreen() {
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <View className="flex-row justify-between items-center p-4 border-b border-border dark:border-border-dark">
+    <View className="flex-row justify-between items-center p-4 border-b border-[#E5E7EB] dark:border-border-dark">
       <Text className="text-text-muted dark:text-text-muted text-[13px] font-semibold">{label}</Text>
       <Text className="text-text-primary dark:text-text-primary-dark text-[15px] font-bold">{value}</Text>
     </View>

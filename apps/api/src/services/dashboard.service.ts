@@ -7,6 +7,7 @@ const toProduct = (row: DbProduct): Product => ({
   ...row,
   imageUrl: row.imageUrl ?? undefined,
   description: row.description ?? undefined,
+  barcode: row.barcode,
   price: Number(row.price),
   createdAt: row.createdAt.toISOString(),
 })

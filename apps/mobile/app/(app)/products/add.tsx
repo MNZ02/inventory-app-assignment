@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, View, TouchableOpacity, Image } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -11,10 +11,12 @@ import { Card } from '../../../components/ui/Card'
 import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import { uploadProductImage } from '../../../lib/api'
+import { BarcodeScanner } from '../../../components/ui/BarcodeScanner'
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
   sku: z.string().min(1, 'SKU is required'),
+  barcode: z.string().optional(),
   description: z.string().optional(),
   category: z.string().min(1, 'Category is required'),
   price: z.coerce.number().positive('Price must be positive'),
@@ -24,16 +26,34 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 export default function AddProductScreen() {
+  const { barcode: prefilledBarcode } = useLocalSearchParams<{ barcode?: string }>()
   const router = useRouter()
   const { createProduct } = useProducts()
   const [serverError, setServerError] = useState<string | null>(null)
   const [image, setImage] = useState<string | null>(null)
+  const [isScannerVisible, setIsScannerVisible] = useState(false)
 
   const { control, handleSubmit, setValue, getValues, formState: { errors, isSubmitting, isValid } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { quantityInStock: 0 },
+    defaultValues: { quantityInStock: 0, barcode: prefilledBarcode || '' },
     mode: 'onChange',
   })
+
+  useEffect(() => {
+    if (prefilledBarcode) {
+      setValue('barcode', prefilledBarcode, { shouldValidate: true })
+    }
+  }, [prefilledBarcode, setValue])
+
+  const handleScanned = (scannedBarcode: string) => {
+    setValue('barcode', scannedBarcode, { shouldValidate: true });
+    
+    // Auto-fill SKU only if it's empty
+    const currentSku = getValues('sku');
+    if (!currentSku || currentSku.trim() === '') {
+      setValue('sku', scannedBarcode, { shouldValidate: true });
+    }
+  };
 
   const onSubmit = async (data: FormData) => {
     setServerError(null)
@@ -42,7 +62,11 @@ export default function AddProductScreen() {
       if (image && !image.startsWith('http')) {
         finalImageUrl = await uploadProductImage(image);
       }
-      await createProduct({ ...data, imageUrl: finalImageUrl })
+      await createProduct({ 
+        ...data, 
+        barcode: data.barcode || undefined,
+        imageUrl: finalImageUrl 
+      })
       Alert.alert('Success', 'Product created successfully')
       router.back()
     } catch (err: any) {
@@ -70,7 +94,7 @@ export default function AddProductScreen() {
   }
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-background dark:bg-background-dark" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView className="flex-1 bg-white dark:bg-background-dark" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Custom Header */}
       <View className="px-5 pt-14 pb-4 flex-row justify-between items-center bg-white dark:bg-card-dark border-b border-border dark:border-border-dark">
         <TouchableOpacity 
@@ -120,6 +144,22 @@ export default function AddProductScreen() {
           <Input label="Product Name" placeholder="Enter product name" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.name?.message} />
         )} />
 
+        <Controller control={control} name="barcode" render={({ field: { onChange, value, onBlur } }) => (
+          <Input 
+            label="Barcode (Optional)" 
+            placeholder="Scan or enter barcode" 
+            value={value} 
+            onChangeText={onChange} 
+            onBlur={onBlur} 
+            error={errors.barcode?.message}
+            rightIcon={
+              <TouchableOpacity onPress={() => setIsScannerVisible(true)} className="p-1">
+                <Ionicons name="barcode-outline" size={24} color="#A78BFA" />
+              </TouchableOpacity>
+            }
+          />
+        )} />
+
         <View className="flex-row gap-3">
           <View className="flex-1">
             <Controller control={control} name="category" render={({ field: { onChange, value, onBlur } }) => (
@@ -135,9 +175,9 @@ export default function AddProductScreen() {
 
         {/* Quantity row */}
         <View className="mb-4">
-          <Text className="text-[13px] font-semibold text-text-primary dark:text-text-primary-dark mb-1.5">Initial Stock</Text>
+          <Text className="mb-1.5" style={{ fontWeight: '600', fontSize: 13, color: '#374151' }}>Initial Stock</Text>
           <View className="flex-row items-center justify-between">
-            <View className="w-24 h-12 bg-background dark:bg-card-dark border border-border dark:border-border-dark rounded-[12px] items-center justify-center">
+            <View className="min-w-[80px] px-4 h-12 bg-background dark:bg-card-dark border border-border dark:border-border-dark rounded-[12px] items-center justify-center">
               <Controller control={control} name="quantityInStock" render={({ field: { value } }) => (
                 <Text className="text-text-primary dark:text-text-primary-dark font-bold text-lg">{value}</Text>
               )} />
@@ -201,6 +241,12 @@ export default function AddProductScreen() {
           disabled={!isValid}
         />
       </ScrollView>
+
+      <BarcodeScanner 
+        isVisible={isScannerVisible} 
+        onClose={() => setIsScannerVisible(false)} 
+        onScanned={handleScanned} 
+      />
     </KeyboardAvoidingView>
   )
 }

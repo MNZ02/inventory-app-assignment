@@ -27,7 +27,7 @@ export function Input({
 
   return (
     <View className={`mb-4 ${containerStyle || ''}`}>
-      {label ? <Text className="text-[13px] font-semibold text-text-primary dark:text-text-primary-dark mb-1.5">{label}</Text> : null}
+      {label ? <Text className="mb-1.5" style={{ fontWeight: '600', fontSize: 13, color: '#374151' }}>{label}</Text> : null}
       <View 
         className={`flex-row items-center bg-background dark:bg-card-dark rounded-[12px] px-4 min-h-[52px] border ${
           isFocused ? 'border-primary' : error ? 'border-danger dark:border-danger-dark' : 'border-transparent dark:border-border-dark'

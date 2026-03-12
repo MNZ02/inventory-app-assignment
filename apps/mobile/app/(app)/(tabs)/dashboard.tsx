@@ -13,6 +13,7 @@ import { BarChart } from 'react-native-chart-kit'
 import { DarkModeToggle } from '../../../components/ui/DarkModeToggle'
 import { LogoutButton } from '../../../components/ui/LogoutButton'
 import { useColorScheme } from 'nativewind'
+import { formatCurrency, formatDate } from '../../../lib/formatters'
 import type { Product, Transaction } from '@inventory/types'
 
 const { width } = Dimensions.get('window');
@@ -134,7 +135,7 @@ export default function DashboardScreen() {
   return (
     <ScrollView 
       className="flex-1 bg-background dark:bg-background-dark" 
-      contentContainerStyle={{ padding: 20, paddingTop: 60 }}
+      contentContainerStyle={{ padding: 20, paddingTop: 60, paddingBottom: 24 }}
       refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
     >
       {/* Header */}
@@ -149,7 +150,6 @@ export default function DashboardScreen() {
           </View>
         </View>
         <View className="flex-row items-center">
-          <DarkModeToggle />
           <LogoutButton />
         </View>
       </View>
@@ -160,8 +160,8 @@ export default function DashboardScreen() {
           <View className="w-8 h-8 rounded-full bg-white/20 items-center justify-center mb-4">
             <Ionicons name="wallet-outline" size={18} color="#FFFFFF" />
           </View>
-          <Text className="text-white/70 text-[10px] absolute top-4 right-4 font-bold">Weekly ↓</Text>
-          <Text className="text-white text-[28px] font-[800] leading-8">₹{(data?.totalStockValue ?? 0).toFixed(2)}</Text>
+          <Text className="text-white/70 text-[10px] absolute top-4 right-4 font-bold">Weekly</Text>
+          <Text className="text-white text-[28px] font-[800] leading-8" numberOfLines={1} adjustsFontSizeToFit>{formatCurrency(data?.totalStockValue ?? 0)}</Text>
           <Text className="text-white/80 text-[13px] font-[400] mt-1">Total Stock Value</Text>
         </Card>
 
@@ -169,7 +169,7 @@ export default function DashboardScreen() {
           <View className="w-8 h-8 rounded-full bg-teal-50 dark:bg-teal-500/10 items-center justify-center mb-4">
             <Ionicons name="cube-outline" size={18} color="#2DD4BF" />
           </View>
-          <Text className="text-text-muted dark:text-text-muted text-[10px] absolute top-4 right-4 font-bold">Weekly ↓</Text>
+          <Text className="text-text-muted dark:text-text-muted text-[10px] absolute top-4 right-4 font-bold">Weekly</Text>
           <Text className="text-text-primary dark:text-text-primary-dark text-[28px] font-[800] leading-8">{data?.totalStockQuantity ?? 0}</Text>
           <Text className="text-text-muted dark:text-text-muted text-[13px] font-[400] mt-1">Total Stock</Text>
         </Card>
@@ -178,7 +178,7 @@ export default function DashboardScreen() {
           <View className="w-8 h-8 rounded-full bg-red-50 dark:bg-red-500/10 items-center justify-center mb-4">
             <Ionicons name="close-circle-outline" size={18} color="#F87171" />
           </View>
-          <Text className="text-text-muted dark:text-text-muted text-[10px] absolute top-4 right-4 font-bold">Weekly ↓</Text>
+          <Text className="text-text-muted dark:text-text-muted text-[10px] absolute top-4 right-4 font-bold">Weekly</Text>
           <Text className="text-text-primary dark:text-text-primary-dark text-[28px] font-[800] leading-8">{(data?.lowStockItems ?? []).filter(i => i.quantityInStock === 0).length}</Text>
           <Text className="text-text-muted dark:text-text-muted text-[13px] font-[400] mt-1">Out of Stock</Text>
         </Card>
@@ -187,7 +187,7 @@ export default function DashboardScreen() {
           <View className="w-8 h-8 rounded-full bg-orange-50 dark:bg-orange-500/10 items-center justify-center mb-4">
             <Ionicons name="warning-outline" size={18} color="#FB923C" />
           </View>
-          <Text className="text-text-muted dark:text-text-muted text-[10px] absolute top-4 right-4 font-bold">Weekly ↓</Text>
+          <Text className="text-text-muted dark:text-text-muted text-[10px] absolute top-4 right-4 font-bold">Weekly</Text>
           <Text className="text-text-primary dark:text-text-primary-dark text-[28px] font-[800] leading-8">{(data?.lowStockItems ?? []).length}</Text>
           <Text className="text-text-muted dark:text-text-muted text-[13px] font-[400] mt-1">Low Stock</Text>
         </Card>
@@ -237,7 +237,7 @@ export default function DashboardScreen() {
                   <View className="flex-1">
                     <Text className="text-text-primary dark:text-text-primary-dark font-bold text-[15px]" numberOfLines={1}>{item.productName}</Text>
                     <Text className="text-text-muted dark:text-text-muted text-xs mt-1">
-                      {new Date(item.date).toLocaleDateString()} · {item.performedBy}
+                      {formatDate(item.date)} · {item.performedBy}
                     </Text>
                   </View>
                 </View>

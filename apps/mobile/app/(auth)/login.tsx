@@ -37,8 +37,8 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView className="flex-1 bg-white dark:bg-background-dark" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-        <View style={{ height: height * 0.55 }} className="px-5 justify-center">
+      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'space-between' }} keyboardShouldPersistTaps="handled">
+        <View className="px-5 pt-20 pb-4 justify-center">
           <Animated.View entering={FadeInUp.duration(600).springify()}>
             <Text className="text-[52px] font-[900] text-text-primary dark:text-text-primary-dark leading-[52px]">PRECISION</Text>
             <Text className="text-[52px] font-[900] text-primary leading-[52px]">INVENTORY</Text>
