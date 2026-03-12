@@ -180,7 +180,10 @@ Transactions screen is accessible from bottom tab bar as **Activity**.
 Barcode scanner flow:
 
 - Scanner component uses `expo-camera` (`CameraView`) inside modal
-- Supported formats: `ean13`, `ean8`, `upc_a`, `upc_e`, `code128`
+- Currently supported barcode types: `ean13`, `ean8`, `upc_a`, `upc_e`, `code128`
+- Permission states:
+  - if `canAskAgain=true`, scanner can re-prompt with **Grant Permission**
+  - if `canAskAgain=false`, scanner shows **Open Settings** fallback
 - `Products` tab scan behavior:
   - barcode found => open product detail
   - barcode not found => prompt and route to Add Product with barcode prefilled
@@ -244,6 +247,17 @@ Notable current fields:
   - `GET /products/barcode/:barcode` returns product when found
   - returns `404` when not found
   - create/update duplicate barcode maps to HTTP `400` with `Barcode already exists`
+
+### 7.2 Operational Troubleshooting
+
+- PostgreSQL connectivity errors (`ETIMEDOUT` / `ECONNREFUSED` on `:5432`):
+  - verify `DATABASE_URL`
+  - verify DB firewall/security group and allowlist rules
+  - verify network path (VPN/bastion/tunnel for private DBs)
+- `column "barcode" does not exist`:
+  - apply latest DB migration (`0002_yielding_the_stranger.sql`) via `pnpm --filter @inventory/api db:migrate`
+- Scanner permission blocked:
+  - when OS blocks re-prompt (`canAskAgain=false`), user must enable camera access from app settings
 
 ## 8. Requirement Coverage Snapshot
 
