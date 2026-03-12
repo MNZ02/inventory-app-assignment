@@ -8,6 +8,7 @@ import {
   View,
   RefreshControl,
   Image,
+  Alert,
 } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { useRouter, useFocusEffect } from 'expo-router'
@@ -18,6 +19,8 @@ import { Badge } from '../../../../components/ui/Badge'
 import { Ionicons } from '@expo/vector-icons'
 import { DarkModeToggle } from '../../../../components/ui/DarkModeToggle'
 import { LogoutButton } from '../../../../components/ui/LogoutButton'
+import { BarcodeScanner } from '../../../../components/ui/BarcodeScanner'
+import { api } from '../../../../lib/api'
 import type { Product } from '@inventory/types'
 
 const FILTERS = [
@@ -26,12 +29,38 @@ const FILTERS = [
   { label: 'Low Stock', value: 'low' },
 ]
 
+const ProductImage = ({ uri, name }: { uri?: string | null; name: string }) => {
+  const [hasError, setHasError] = useState(false)
+
+  useEffect(() => {
+    setHasError(false)
+  }, [uri])
+
+  if (uri && !hasError) {
+    return (
+      <Image 
+        source={{ uri }} 
+        className="w-full h-full rounded-[12px]" 
+        onError={() => setHasError(true)} 
+      />
+    )
+  }
+
+  return (
+    <Text className="text-primary font-bold text-xl">
+      {name.charAt(0).toUpperCase()}
+    </Text>
+  )
+}
+
 export default function ProductsScreen() {
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [activeFilter, setActiveFilter] = useState('all')
   const [activeCategory, setActiveCategory] = useState('all')
+  const [isScannerVisible, setIsScannerVisible] = useState(false)
+  const [isSearchingBarcode, setIsSearchingBarcode] = useState(false)
 
   const { products, isLoading, refetch } = useProducts({
     search: debouncedSearch || undefined,
@@ -92,6 +121,38 @@ export default function ProductsScreen() {
     }, 400)
   }, [])
 
+  const handleScanToFind = async (barcode: string) => {
+    setIsSearchingBarcode(true);
+    try {
+      const res = await api.get<Product>(`/products/barcode/${encodeURIComponent(barcode)}`);
+      const product = res.data;
+      if (product) {
+        router.push(`/(app)/products/${product.id}`);
+      }
+    } catch (err: any) {
+      if (err?.response?.status === 404 || err?.status === 404) {
+        Alert.alert(
+          'Product Not Found',
+          `No product found with barcode ${barcode}. Would you like to add it?`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { 
+              text: 'Add Product', 
+              onPress: () => router.push({
+                pathname: '/(app)/products/add',
+                params: { barcode }
+              })
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Error', 'Failed to lookup barcode');
+      }
+    } finally {
+      setIsSearchingBarcode(false);
+    }
+  };
+
   const getStockStatus = (quantity: number) => {
     if (quantity === 0) return { label: 'Out of Stock', variant: 'danger' as const }
     if (quantity < 10) return { label: 'Low Stock', variant: 'warning' as const }
@@ -102,17 +163,22 @@ export default function ProductsScreen() {
 
   return (
     <View className="flex-1 bg-background dark:bg-background-dark">
+      {isSearchingBarcode && (
+        <View className="absolute inset-0 bg-black/20 z-50 items-center justify-center">
+          <LoadingSpinner />
+        </View>
+      )}
       {/* Header */}
       <View className="px-5 pt-14 pb-4 flex-row justify-between items-center">
         <Text className="text-text-primary dark:text-text-primary-dark text-[28px] font-[900]">Inventory</Text>
         <View className="flex-row items-center">
           <TouchableOpacity 
-            className="bg-primary-light dark:bg-primary-dark/20 px-4 py-2 rounded-full mr-2"
-            onPress={() => router.push('/(app)/products/add')}
+            className="bg-primary-light dark:bg-primary-dark/20 p-2 rounded-full mr-2 items-center justify-center"
+            onPress={() => setIsScannerVisible(true)}
           >
-            <Text className="text-primary dark:text-primary font-bold text-sm">Add Product</Text>
+            <Ionicons name="barcode-outline" size={20} color="#A78BFA" />
           </TouchableOpacity>
-          <DarkModeToggle />
+          <DarkModeToggle className="mr-2" />
           <LogoutButton />
         </View>
       </View>
@@ -139,7 +205,7 @@ export default function ProductsScreen() {
       </View>
 
       {/* Category Pills */}
-      <View className="mb-4">
+      <View className="mb-2">
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
           {categoryOptions.map((cat) => (
             <TouchableOpacity 
@@ -160,7 +226,7 @@ export default function ProductsScreen() {
       </View>
 
       {/* Search Bar */}
-      <View className="px-5 mb-4">
+      <View className="px-5 mb-4 mt-2">
         <View className="flex-row items-center bg-card dark:bg-card-dark rounded-[12px] px-4 py-3 border border-border dark:border-border-dark">
           <Ionicons name="search-outline" size={20} color="#9CA3AF" />
           <TextInput
@@ -192,11 +258,7 @@ export default function ProductsScreen() {
               <TouchableOpacity onPress={() => router.push(`/(app)/products/${item.id}`)}>
                 <Card className="mb-3 p-3 flex-row items-center">
                   <View className="w-[60px] h-[60px] bg-background dark:bg-background-dark rounded-[12px] items-center justify-center mr-4">
-                    {item.imageUrl ? (
-                      <Image source={{ uri: item.imageUrl }} className="w-full h-full rounded-[12px]" />
-                    ) : (
-                      <Text className="text-primary font-bold text-lg">{item.name.slice(0, 2).toUpperCase()}</Text>
-                    )}
+                    <ProductImage uri={item.imageUrl} name={item.name} />
                   </View>
                   <View className="flex-1">
                     <Text className="text-text-primary dark:text-text-primary-dark font-[700] text-[15px]" numberOfLines={1}>{item.name}</Text>
@@ -239,6 +301,12 @@ export default function ProductsScreen() {
       >
         <Ionicons name="add" size={32} color="white" />
       </TouchableOpacity>
+
+      <BarcodeScanner 
+        isVisible={isScannerVisible} 
+        onClose={() => setIsScannerVisible(false)} 
+        onScanned={handleScanToFind} 
+      />
     </View>
   )
 }

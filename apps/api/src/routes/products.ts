@@ -9,6 +9,7 @@ productRouter.use('*', authMiddleware)
 productRouter.use('*', bodyLimit(2 * 1024 * 1024)) // 2MB limit
 
 productRouter.get('/', productsController.getAll)
+productRouter.get('/barcode/:barcode', productsController.getByBarcode)
 productRouter.get('/:id', productsController.getById)
 productRouter.post('/', productsController.create)
 productRouter.put('/:id', productsController.update)

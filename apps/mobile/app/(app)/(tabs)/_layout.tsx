@@ -20,7 +20,7 @@ export default function TabsLayout() {
           backgroundColor: isDark ? '#1F2937' : '#FFFFFF',
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: '600',
         },
         headerShown: false,

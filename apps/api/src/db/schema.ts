@@ -24,6 +24,7 @@ export const products = pgTable('products', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull(),
   sku: text('sku').notNull().unique(),
+  barcode: text('barcode').unique(),
   description: text('description'),
   category: text('category').notNull(),
   price: numeric('price', { precision: 12, scale: 2 }).notNull(),

@@ -48,7 +48,7 @@ export default function RegisterScreen() {
           <Text className="text-[40px] font-[900] text-text-primary dark:text-text-primary-dark leading-[40px]">ACCOUNT</Text>
           <Text className="text-[40px] font-[900] text-primary leading-[40px]">INVENTORY</Text>
           
-          <Text className="text-text-secondary dark:text-text-muted mt-3 text-[15px] font-[400] leading-6 mb-10">
+          <Text className="text-text-secondary dark:text-text-muted mt-3 text-[15px] font-[400] leading-6 mb-6">
             Join thousands managing their inventory smarter.
           </Text>
         </Animated.View>

@@ -2,7 +2,11 @@ import { TouchableOpacity } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { Ionicons } from '@expo/vector-icons';
 
-export function DarkModeToggle() {
+interface DarkModeToggleProps {
+  className?: string;
+}
+
+export function DarkModeToggle({ className }: DarkModeToggleProps) {
   const { themePreference, cycleTheme, colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
 
@@ -18,7 +22,7 @@ export function DarkModeToggle() {
   return (
     <TouchableOpacity
       onPress={cycleTheme}
-      className="w-10 h-10 rounded-full border border-border dark:border-border-dark items-center justify-center bg-card dark:bg-card-dark"
+      className={`w-10 h-10 rounded-full border border-border dark:border-border-dark items-center justify-center bg-card dark:bg-card-dark ${className || ''}`}
     >
       <Ionicons
         name={iconName}

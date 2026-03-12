@@ -5,6 +5,7 @@ import { productsService } from '../services/products.service'
 export const productSchema = z.object({
   name: z.string().min(1),
   sku: z.string().min(1),
+  barcode: z.string().min(1).optional().nullable(),
   description: z.string().optional(),
   category: z.string().min(1),
   price: z.number().positive(),
@@ -35,6 +36,15 @@ export const productsController = {
     return c.json({ data: product })
   },
 
+  async getByBarcode(c: Context) {
+    const barcode = c.req.param('barcode') as string
+    const product = await productsService.findByBarcode(barcode)
+    if (!product) {
+      return c.json({ data: null, error: 'Product not found' }, 404)
+    }
+    return c.json({ data: product })
+  },
+
   async create(c: Context) {
     const body = await c.req.json().catch(() => null)
     const parsed = productSchema.safeParse(body)
@@ -48,6 +58,10 @@ export const productsController = {
       return c.json({ data: product, message: 'Product created' }, 201)
     } catch (err: any) {
       if (err?.code === '23505') {
+        const detail = err.detail || ''
+        if (detail.includes('barcode')) {
+          return c.json({ data: null, error: 'Barcode already exists' }, 400)
+        }
         return c.json({ data: null, error: 'SKU already exists' }, 400)
       }
       return c.json({ data: null, error: 'Internal server error' }, 500)
@@ -63,11 +77,22 @@ export const productsController = {
       return c.json({ data: null, error: parsed.error.flatten() }, 400)
     }
 
-    const product = await productsService.update(id, parsed.data)
-    if (!product) {
-      return c.json({ data: null, error: 'Product not found' }, 404)
+    try {
+      const product = await productsService.update(id, parsed.data)
+      if (!product) {
+        return c.json({ data: null, error: 'Product not found' }, 404)
+      }
+      return c.json({ data: product, message: 'Product updated' })
+    } catch (err: any) {
+      if (err?.code === '23505') {
+        const detail = err.detail || ''
+        if (detail.includes('barcode')) {
+          return c.json({ data: null, error: 'Barcode already exists' }, 400)
+        }
+        return c.json({ data: null, error: 'SKU already exists' }, 400)
+      }
+      return c.json({ data: null, error: 'Internal server error' }, 500)
     }
-    return c.json({ data: product, message: 'Product updated' })
   },
 
   async delete(c: Context) {

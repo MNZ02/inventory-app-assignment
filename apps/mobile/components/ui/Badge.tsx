@@ -7,7 +7,7 @@ interface BadgeProps {
 }
 
 export function Badge({ label, variant = 'default', className }: BadgeProps) {
-  const baseClasses = "rounded-full px-3 py-1 self-start";
+  const baseClasses = "rounded-full px-[10px] py-[4px] self-start";
   
   const variants = {
     success: { bg: "bg-success-light dark:bg-success-dark/20", text: "text-success dark:text-success" },
