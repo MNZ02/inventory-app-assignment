@@ -110,6 +110,7 @@ All responses follow the shape: `{ data, message?, error? }`
 |---|---|---|---|
 | POST | `/auth/register` | No | Register a new user, returns JWT |
 | POST | `/auth/login` | No | Login with email/password, returns JWT |
+| POST | `/auth/logout` | Yes | Logout current user session |
 
 ### Products
 
@@ -211,6 +212,11 @@ pnpm --filter @inventory/api db:migrate
 ```
 
 3. Mobile app has camera permission granted.
+
+Permission behavior:
+
+- If camera permission is denied but can still be requested, tapping **Grant Permission** re-prompts.
+- If camera permission is blocked by OS (`Don't ask again` / denied permanently), scanner shows **Open Settings** to enable camera manually.
 
 ### Scan to Find (Products Tab)
 

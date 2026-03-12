@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Alert,
   KeyboardAvoidingView,
@@ -11,6 +11,7 @@ import {
   View,
   Image,
   Dimensions,
+  useColorScheme,
 } from 'react-native'
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router'
 import { useCallback } from 'react'
@@ -27,6 +28,8 @@ import type { Transaction } from '@inventory/types'
 const { width } = Dimensions.get('window');
 
 export default function ProductDetailScreen() {
+  const colorScheme = useColorScheme()
+  const iconColor = colorScheme === 'dark' ? '#FFFFFF' : '#111111'
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
   const { product, isLoading, error, refetch } = useProduct(id)
@@ -41,6 +44,10 @@ export default function ProductDetailScreen() {
       refetch()
     }, [refetch]),
   )
+
+  useEffect(() => {
+    setImageError(false)
+  }, [product?.imageUrl])
 
   const handleDelete = () => {
     Alert.alert('Delete Product', 'Are you sure you want to delete this product?', [
@@ -102,7 +109,7 @@ export default function ProductDetailScreen() {
           onPress={() => router.back()}
           className="w-10 h-10 rounded-full bg-card dark:bg-card-dark items-center justify-center border border-border dark:border-border-dark"
         >
-          <Ionicons name="arrow-back" size={20} color="#111111" className="dark:text-white" />
+          <Ionicons name="arrow-back" size={20} color={iconColor} />
         </TouchableOpacity>
       </View>
 

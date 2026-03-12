@@ -194,7 +194,12 @@ export default function EditProductScreen() {
 
         {/* Quantity row */}
         <View className="mb-4">
-          <Text className="mb-1.5" style={{ fontWeight: '600', fontSize: 13, color: '#374151' }}>Stock Quantity</Text>
+          <Text
+            className="mb-1.5 text-text-primary dark:text-text-primary-dark"
+            style={{ fontWeight: '600', fontSize: 13 }}
+          >
+            Stock Quantity
+          </Text>
           <View className="flex-row items-center justify-between">
             <View className="min-w-[80px] px-4 h-12 bg-background dark:bg-card-dark border border-border dark:border-border-dark rounded-[12px] items-center justify-center">
               <Controller control={control} name="quantityInStock" render={({ field: { value } }) => (

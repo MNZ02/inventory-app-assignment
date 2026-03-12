@@ -1,9 +1,13 @@
-import { describe, expect, it, mock, beforeEach } from 'bun:test'
+import { beforeAll, describe, expect, it, mock } from 'bun:test'
 import { Hono } from 'hono'
-import productRouter from '../routes/products'
-import { productsService } from '../services/products.service'
 
-// Mock the productsService
+// Bypass auth in controller tests so requests reach product handlers.
+mock.module('../middleware/auth', () => ({
+  authMiddleware: async (_c: any, next: any) => {
+    await next()
+  },
+}))
+
 mock.module('../services/products.service', () => ({
   productsService: {
     findByBarcode: mock(),
@@ -16,10 +20,14 @@ mock.module('../services/products.service', () => ({
 }))
 
 describe('Products Controller - Barcode', () => {
-  const app = new Hono().route('/products', productRouter)
+  let app: Hono
+  let productsService: any
 
-  beforeEach(() => {
-    mock.restore()
+  beforeAll(async () => {
+    const { default: productRouter } = await import('../routes/products')
+    const services = await import('../services/products.service')
+    productsService = services.productsService
+    app = new Hono().route('/products', productRouter)
   })
 
   it('GET /products/barcode/:barcode - returns product when found', async () => {

@@ -32,6 +32,10 @@ const FILTERS = [
 const ProductImage = ({ uri, name }: { uri?: string | null; name: string }) => {
   const [hasError, setHasError] = useState(false)
 
+  useEffect(() => {
+    setHasError(false)
+  }, [uri])
+
   if (uri && !hasError) {
     return (
       <Image 
@@ -124,22 +128,6 @@ export default function ProductsScreen() {
       const product = res.data;
       if (product) {
         router.push(`/(app)/products/${product.id}`);
-      } else {
-        // If not found, navigate to Add Product with barcode prefilled
-        Alert.alert(
-          'Product Not Found',
-          `No product found with barcode ${barcode}. Would you like to add it?`,
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { 
-              text: 'Add Product', 
-              onPress: () => router.push({
-                pathname: '/(app)/products/add',
-                params: { barcode }
-              })
-            }
-          ]
-        );
       }
     } catch (err: any) {
       if (err?.response?.status === 404 || err?.status === 404) {
