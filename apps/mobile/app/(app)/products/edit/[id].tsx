@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, View, TouchableOpacity, Image } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useForm, Controller } from 'react-hook-form'
@@ -17,7 +17,7 @@ import { BarcodeScanner } from '../../../../components/ui/BarcodeScanner'
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
   sku: z.string().min(1, 'SKU is required'),
-  barcode: z.string().optional(),
+  barcode: z.string().optional().nullable(),
   description: z.string().optional(),
   category: z.string().min(1, 'Category is required'),
   price: z.coerce.number().positive('Price must be positive'),
@@ -34,6 +34,7 @@ export default function EditProductScreen() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [image, setImage] = useState<string | null>(null)
   const [isScannerVisible, setIsScannerVisible] = useState(false)
+  const isInitialized = useRef(false)
 
   const { control, handleSubmit, reset, setValue, getValues, formState: { errors, isSubmitting, isValid } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -41,7 +42,7 @@ export default function EditProductScreen() {
   })
 
   useEffect(() => {
-    if (product) {
+    if (product && !isInitialized.current) {
       reset({
         name: product.name,
         sku: product.sku,
@@ -53,6 +54,7 @@ export default function EditProductScreen() {
         supplierName: product.supplierName,
       })
       if (product.imageUrl) setImage(product.imageUrl)
+      isInitialized.current = true
     }
   }, [product, reset])
 
@@ -158,14 +160,14 @@ export default function EditProductScreen() {
         ) : null}
 
         <Controller control={control} name="name" render={({ field: { onChange, value, onBlur } }) => (
-          <Input label="Product Name" placeholder="Enter product name" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.name?.message} />
+          <Input label="Product Name" placeholder="Enter product name" value={value ?? ''} onChangeText={onChange} onBlur={onBlur} error={errors.name?.message} />
         )} />
 
         <Controller control={control} name="barcode" render={({ field: { onChange, value, onBlur } }) => (
           <Input 
             label="Barcode (Optional)" 
             placeholder="Scan or enter barcode" 
-            value={value} 
+            value={value ?? ''} 
             onChangeText={onChange} 
             onBlur={onBlur} 
             error={errors.barcode?.message}
@@ -180,12 +182,12 @@ export default function EditProductScreen() {
         <View className="flex-row gap-3">
           <View className="flex-1">
             <Controller control={control} name="category" render={({ field: { onChange, value, onBlur } }) => (
-              <Input label="Category" placeholder="e.g. Tools" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.category?.message} />
+              <Input label="Category" placeholder="e.g. Tools" value={value ?? ''} onChangeText={onChange} onBlur={onBlur} error={errors.category?.message} />
             )} />
           </View>
           <View className="flex-1">
             <Controller control={control} name="sku" render={({ field: { onChange, value, onBlur } }) => (
-              <Input label="SKU" placeholder="WGT-001" autoCapitalize="characters" value={value} onChangeText={onChange} onBlur={onBlur} error={errors.sku?.message} />
+              <Input label="SKU" placeholder="WGT-001" autoCapitalize="characters" value={value ?? ''} onChangeText={onChange} onBlur={onBlur} error={errors.sku?.message} />
             )} />
           </View>
         </View>

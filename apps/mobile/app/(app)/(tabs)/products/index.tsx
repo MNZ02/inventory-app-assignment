@@ -190,12 +190,8 @@ export default function ProductsScreen() {
           >
             <Ionicons name="barcode-outline" size={20} color="#A78BFA" />
           </TouchableOpacity>
-          <TouchableOpacity 
-            className="bg-primary-light dark:bg-primary-dark/20 px-4 py-2 rounded-full items-center justify-center"
-            onPress={() => router.push('/(app)/products/add')}
-          >
-            <Text className="text-primary dark:text-primary font-bold text-sm">Add Product</Text>
-          </TouchableOpacity>
+          <DarkModeToggle className="mr-2" />
+          <LogoutButton />
         </View>
       </View>
 

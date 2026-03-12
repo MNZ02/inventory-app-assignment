@@ -12,6 +12,7 @@ Core capabilities implemented:
 
 - JWT auth (register/login/logout) with role payload
 - Product CRUD with search/sort/category filtering
+- Product barcode support (optional unique barcode + scanner lookup)
 - Inventory transactions (IN/OUT) with atomic stock updates
 - Dashboard stats + recent transactions + stock flow chart
 - Product image upload (Cloudinary signed upload flow)
@@ -62,7 +63,7 @@ Pattern: `route -> controller -> service -> DB`.
 ### 3.2 Database Schema (Drizzle)
 
 - `users`: identity, role, password hash
-- `products`: product catalog, price, quantity, optional image URL
+- `products`: product catalog, SKU, optional unique barcode, price, quantity, optional image URL
 - `transactions`: product stock movement (`IN`/`OUT`) with `performedBy`
 
 ### 3.3 Authentication
@@ -82,6 +83,7 @@ Pattern: `route -> controller -> service -> DB`.
 #### Products (auth required)
 
 - `GET /products` with query `search`, `category`, `sortBy`, `order`
+- `GET /products/barcode/:barcode` (exact barcode lookup)
 - `GET /products/:id`
 - `POST /products`
 - `PUT /products/:id`
@@ -91,6 +93,8 @@ Validation notes:
 
 - `imageUrl` accepts optional HTTPS URL only
 - non-URL/base64 data URIs are rejected
+- `barcode` accepts `string | null` and is optional
+- `barcode` must be unique when present (duplicate mapped to `Barcode already exists`)
 - request body size limit middleware added on product routes
 
 #### Transactions (auth required)
@@ -167,9 +171,22 @@ Transactions screen is accessible from bottom tab bar as **Activity**.
   - debounced search
   - stock-status filter pills
   - category pills derived from loaded products
+  - barcode scan button in header for scan-to-find flow
 - Product cards show dynamic trend badge when available (`percent` or `units`)
 - Product detail supports stock adjustment modal (`IN` / `OUT`)
+- Product detail refetches on focus to avoid stale data after navigation stack transitions
 - Edit success redirects to Products tab
+
+Barcode scanner flow:
+
+- Scanner component uses `expo-camera` (`CameraView`) inside modal
+- Supported formats: `ean13`, `ean8`, `upc_a`, `upc_e`, `code128`
+- `Products` tab scan behavior:
+  - barcode found => open product detail
+  - barcode not found => prompt and route to Add Product with barcode prefilled
+- Add/Edit forms:
+  - barcode field supports manual input or scan
+  - scanned value auto-fills SKU only when SKU is empty
 
 ### 4.4 Dashboard UX
 
@@ -190,6 +207,7 @@ Transactions screen is accessible from bottom tab bar as **Activity**.
 
 Notable current fields:
 
+- `Product.barcode?: string | null`
 - `Product.trend?: { kind: 'percent' | 'units'; value: number } | null`
 
 ## 6. Environment Variables
@@ -215,6 +233,17 @@ Notable current fields:
   - `pnpm dev:localhost`
   - `pnpm dev:tunnel`
 - Root and mobile gitignore now ignore Expo cache artifacts (`.expo/cache/**`).
+- Barcode migration to apply before running latest API/mobile:
+  - `apps/api/src/db/migrations/0002_yielding_the_stranger.sql`
+  - adds `products.barcode` + unique constraint
+
+### 7.1 Barcode API Tests
+
+- `apps/api/src/controllers/products.controller.test.ts`
+- Covered scenarios:
+  - `GET /products/barcode/:barcode` returns product when found
+  - returns `404` when not found
+  - create/update duplicate barcode maps to HTTP `400` with `Barcode already exists`
 
 ## 8. Requirement Coverage Snapshot
 
@@ -225,4 +254,3 @@ Implemented and verified:
 - Required transaction fields (product, quantity, type, date, performedBy)
 - Recent transactions on dashboard
 - Atomic stock updates + insufficient-stock guard
-

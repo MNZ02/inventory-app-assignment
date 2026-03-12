@@ -40,10 +40,10 @@ export default function AddProductScreen() {
   })
 
   useEffect(() => {
-    if (prefilledBarcode) {
+    if (prefilledBarcode && getValues('barcode') !== prefilledBarcode) {
       setValue('barcode', prefilledBarcode, { shouldValidate: true })
     }
-  }, [prefilledBarcode, setValue])
+  }, [prefilledBarcode, setValue, getValues])
 
   const handleScanned = (scannedBarcode: string) => {
     setValue('barcode', scannedBarcode, { shouldValidate: true });

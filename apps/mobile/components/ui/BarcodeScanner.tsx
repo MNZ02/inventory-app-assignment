@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Modal, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, Modal, TouchableOpacity, SafeAreaView, Dimensions, Linking, Alert } from 'react-native';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from './Button';
@@ -17,17 +17,31 @@ export function BarcodeScanner({ isVisible, onClose, onScanned }: BarcodeScanner
   useEffect(() => {
     if (isVisible) {
       setScanned(false);
-      if (!permission?.granted) {
-        requestPermission();
-      }
     }
-  }, [isVisible, permission, requestPermission]);
+  }, [isVisible]);
+
+  useEffect(() => {
+    if (isVisible && !permission?.granted && permission?.canAskAgain) {
+      requestPermission();
+    }
+  }, [isVisible, permission?.granted, permission?.canAskAgain, requestPermission]);
 
   const handleBarcodeScanned = (result: BarcodeScanningResult) => {
     if (scanned) return;
     setScanned(true);
     onScanned(result.data);
     onClose();
+  };
+
+  const handleOpenSettings = async () => {
+    try {
+      await Linking.openSettings();
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        "Could not open settings. Please open your device settings manually to enable camera access."
+      );
+    }
   };
 
   if (!permission) {
@@ -47,12 +61,18 @@ export function BarcodeScanner({ isVisible, onClose, onScanned }: BarcodeScanner
             <View className="flex-1 justify-center items-center px-6">
               <Ionicons name="camera-outline" size={64} color="white" />
               <Text className="text-white text-xl font-bold mt-4 text-center">
-                Camera Permission Needed
+                {permission.canAskAgain ? "Camera Permission Needed" : "Camera Access Denied"}
               </Text>
               <Text className="text-gray-400 mt-2 text-center mb-8">
-                We need your permission to show the camera for scanning barcodes.
+                {permission.canAskAgain 
+                  ? "We need your permission to show the camera for scanning barcodes."
+                  : "Camera access is disabled in your device settings. Please enable it to use the scanner."}
               </Text>
-              <Button title="Grant Permission" onPress={requestPermission} />
+              {permission.canAskAgain ? (
+                <Button title="Grant Permission" onPress={requestPermission} />
+              ) : (
+                <Button title="Open Settings" onPress={handleOpenSettings} />
+              )}
               <TouchableOpacity onPress={onClose} className="mt-4">
                 <Text className="text-white font-medium">Cancel</Text>
               </TouchableOpacity>

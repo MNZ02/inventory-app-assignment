@@ -150,6 +150,7 @@ export default function DashboardScreen() {
           </View>
         </View>
         <View className="flex-row items-center">
+          <DarkModeToggle className="mr-2" />
           <LogoutButton />
         </View>
       </View>

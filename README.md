@@ -73,6 +73,12 @@ The API runs at `http://localhost:3000`. Open the Expo app with Expo Go or a dev
 
 - **Expo Router v6 mobile shell**: authenticated tabs now include `Dashboard`, `Products`, and `Activity`.
 - **System dark mode + manual theme toggle**: app follows device appearance and supports light/dark/system switching.
+- **Barcode support end-to-end**:
+  - `products.barcode` added in DB with unique constraint
+  - new lookup endpoint `GET /products/barcode/:barcode`
+  - scanner UI added for products list and product add/edit forms
+  - supports EAN-13, EAN-8, UPC-A, UPC-E, and Code-128
+  - scan-to-find opens product detail if found, otherwise offers prefilled Add Product
 - **Image upload pipeline upgraded**: mobile uploads product images to Cloudinary using signed params; API stores HTTPS `imageUrl` only.
 - **Base64 image migration support**: script added to migrate legacy `data:image/...` rows to hosted URLs.
 - **Dashboard metrics expanded**:
@@ -84,6 +90,10 @@ The API runs at `http://localhost:3000`. Open the Expo app with Expo Go or a dev
 - **Inventory UX refinements**:
   - stock adjust modal is keyboard-aware on iOS/Android
   - after editing a product, user is redirected to Products tab
+- **Detail freshness improvement**:
+  - product detail refetches on screen focus to avoid stale data when navigating back through stack history
+- **API test coverage additions**:
+  - barcode lookup and barcode uniqueness controller behavior tests added (`bun:test`)
 - **Repo hygiene updates**: `.expo/cache/**` ignored and tracked cache artifacts removed.
 
 ---
@@ -105,7 +115,8 @@ All responses follow the shape: `{ data, message?, error? }`
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| GET | `/products` | Yes | List all products. Query: `search`, `category`, `sortBy` (price\|quantity), `order` (asc\|desc) |
+| GET | `/products` | Yes | List all products. Query: `search`, `category`, `sortBy` (price\|quantity), `order` (asc\|desc). Search includes `name`, `sku`, `barcode`, and `supplierName` |
+| GET | `/products/barcode/:barcode` | Yes | Lookup a product by exact barcode |
 | GET | `/products/:id` | Yes | Get single product by ID |
 | POST | `/products` | Yes | Create a new product |
 | PUT | `/products/:id` | Yes | Update a product |
@@ -181,6 +192,46 @@ inventory-app/
 - **Stock transactions** run in a DB transaction — an OUT that would bring stock below 0 is rejected with HTTP 400
 - **Low stock** threshold is `quantityInStock < 10`
 - **Mobile** uses `expo-secure-store` for JWT persistence and auto-logs out on API 401
+- **Barcode** is optional (`null`/missing allowed) but unique when present
 - **Product images** are URL-only (`https://...`) and uploaded via Cloudinary signed flow (no base64 payload storage)
 - **Dashboard stock flow** uses UTC day buckets and net units (`IN - OUT`)
 - **Shared types** in `packages/types` are consumed as raw TypeScript source via path aliases — no build step needed
+
+---
+
+## Barcode Scanner Usage
+
+### Prerequisites
+
+1. API is running and connected to PostgreSQL.
+2. Barcode migration is applied:
+
+```bash
+pnpm --filter @inventory/api db:migrate
+```
+
+3. Mobile app has camera permission granted.
+
+### Scan to Find (Products Tab)
+
+1. Open **Products** tab.
+2. Tap the barcode icon in the header.
+3. Scan a supported barcode.
+4. If found, app opens product detail.
+5. If not found, app shows prompt to open **Add Product** with prefilled barcode.
+
+### Add/Edit Product with Scan
+
+1. Open **Add Product** or **Edit Product**.
+2. Tap barcode icon in the **Barcode (Optional)** field.
+3. Scan a code.
+4. Barcode field is filled from scanner output.
+5. SKU is auto-filled only if SKU is currently empty.
+
+### Supported Formats (v1)
+
+- EAN-13
+- EAN-8
+- UPC-A
+- UPC-E
+- Code-128
